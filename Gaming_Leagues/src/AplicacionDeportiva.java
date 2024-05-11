@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,7 +13,6 @@ public class AplicacionDeportiva {
     private static JTabbedPane tabbedPane;
 
     public static void main(String[] args) {
-        ConexionBD.conectar(); // Conectar a la base de datos al iniciar la aplicación
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 crearYMostrarGUI();
@@ -29,409 +29,395 @@ public class AplicacionDeportiva {
         mainPanel = new JPanel(new BorderLayout());
         tabbedPane = new JTabbedPane();
 
-        // Agregar pestañas con los componentes reutilizables
-        tabbedPane.addTab("Jugadores", PanelJugadores());
-        tabbedPane.addTab("Equipos", PanelEquipos());
-        tabbedPane.addTab("Partidos", PanelPartidos());
-        tabbedPane.addTab("Ligas", PanelLigas());
-        tabbedPane.addTab("Juegos", PanelJuegos());
-        tabbedPane.addTab("Clasificaciones", PanelClasificaciones());
+        tabbedPane.addTab("Jugadores", new PanelJugadores());
+        tabbedPane.addTab("Equipos", new PanelEquipos());
+        tabbedPane.addTab("Ligas", new PanelLigas());
+        tabbedPane.addTab("Juegos", new PanelJuegos());
+        tabbedPane.addTab("Partidos", new PanelPartidos());
+        tabbedPane.addTab("Procesos de Negocio", new PanelProcesos());
+        tabbedPane.addTab("Reportes", new PanelReportes());
 
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
         frame.setContentPane(mainPanel);
         frame.setVisible(true);
     }
 
-    // Métodos para crear los paneles con los componentes reutilizables
-    private static JPanel PanelJugadores() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new PanelInsertarJugador(), BorderLayout.NORTH);
-        panel.add(new PanelConsultar("Consultar Jugadores", new String[]{"Nombre", "Equipo"}), BorderLayout.CENTER);
-        return panel;
-    }
+    // Clase para crear el panel de jugadores
+    // Clase para crear el panel de jugadores
+    static class PanelJugadores extends JPanel {
+        private JTable jugadoresTable;
+        private DefaultTableModel tableModel;
 
-    private static JPanel PanelEquipos() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new PanelInsertarEquipo(), BorderLayout.NORTH);
-        panel.add(new PanelConsultar("Consultar Equipos", new String[]{"Nombre"}), BorderLayout.CENTER);
-        return panel;
-    }
+        public PanelJugadores() {
+            setLayout(new BorderLayout());
 
-    private static JPanel PanelPartidos() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new PanelInsertarPartido(), BorderLayout.NORTH);
-        panel.add(new PanelConsultar("Consultar Partidos", new String[]{"Juego"}), BorderLayout.CENTER);
-        return panel;
-    }
+            // Crear tabla para mostrar jugadores
+            tableModel = new DefaultTableModel();
+            tableModel.addColumn("ID");
+            tableModel.addColumn("Nombre");
+            tableModel.addColumn("Apellido");
+            tableModel.addColumn("Género");
+            tableModel.addColumn("Dirección");
 
-    private static JPanel PanelLigas() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new PanelInsertarLiga(), BorderLayout.NORTH);
-        panel.add(new PanelConsultar("Consultar Ligas", new String[]{"Nombre"}), BorderLayout.CENTER);
-        return panel;
-    }
+            jugadoresTable = new JTable(tableModel);
+            JScrollPane scrollPane = new JScrollPane(jugadoresTable);
+            add(scrollPane, BorderLayout.CENTER);
 
-    private static JPanel PanelJuegos() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new PanelInsertarJuego(), BorderLayout.NORTH);
-        panel.add(new PanelConsultar("Consultar Juegos", new String[]{"Nombre"}), BorderLayout.CENTER);
-        return panel;
-    }
+            // Panel para agregar nuevos jugadores
+            JPanel panelAgregar = new JPanel(new GridLayout(2, 2));
+            panelAgregar.setBorder(BorderFactory.createTitledBorder("Agregar Jugador"));
 
-    private static JPanel PanelClasificaciones() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new PanelClasificacion(), BorderLayout.CENTER);
-        return panel;
-    }
-
-    // Clase para crear componentes reutilizables de inserción de datos
-    static class PanelInsertar extends JPanel {
-        public PanelInsertar(String titulo, String[] campos) {
-            setLayout(new GridLayout(campos.length + 1, 2));
-            add(new JLabel(titulo));
-            add(new JLabel()); // Espacio en blanco
-            for (String campo : campos) {
-                add(new JLabel(campo + ":"));
-                add(new JTextField());
-            }
-            JButton guardar = new JButton("Guardar");
-            guardar.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    // Lógica para manejar el envío del formulario y realizar la operación correspondiente
-                    System.out.println("Formulario de inserción enviado");
-                }
-            });
-            add(guardar);
-        }
-    }
-
-    // Clase para crear componentes reutilizables de consulta de datos
-    static class PanelConsultar extends JPanel {
-        public PanelConsultar(String titulo, String[] campos) {
-            setLayout(new GridLayout(campos.length + 1, 2));
-            add(new JLabel(titulo));
-            add(new JLabel()); // Espacio en blanco
-            for (String campo : campos) {
-                add(new JLabel(campo + ":"));
-                add(new JTextField());
-            }
-            JButton consultar = new JButton("Consultar");
-            consultar.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    // Lógica para manejar la consulta y mostrar los resultados
-                    System.out.println("Consulta realizada");
-                }
-            });
-            add(consultar);
-        }
-    }
-
-    // Clase para crear componentes reutilizables de inserción de jugadores
-    static class PanelInsertarJugador extends JPanel {
-        public PanelInsertarJugador() {
-            setLayout(new GridLayout(4, 2));
-            add(new JLabel("Nombre:"));
             JTextField nombreField = new JTextField();
-            add(nombreField);
-            add(new JLabel("Apellido:"));
             JTextField apellidoField = new JTextField();
-            add(apellidoField);
-            add(new JLabel("Género:"));
             JTextField generoField = new JTextField();
-            add(generoField);
-            add(new JLabel("Dirección:"));
             JTextField direccionField = new JTextField();
-            add(direccionField);
 
-            JButton guardar = new JButton("Guardar");
-            guardar.addActionListener(new ActionListener() {
+            panelAgregar.add(new JLabel("Nombre:"));
+            panelAgregar.add(nombreField);
+            panelAgregar.add(new JLabel("Apellido:"));
+            panelAgregar.add(apellidoField);
+            panelAgregar.add(new JLabel("Género:"));
+            panelAgregar.add(generoField);
+            panelAgregar.add(new JLabel("Dirección:"));
+            panelAgregar.add(direccionField);
+
+            JButton agregarButton = new JButton("Agregar");
+            agregarButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    // Obtener los datos del jugador
                     String nombre = nombreField.getText();
                     String apellido = apellidoField.getText();
                     String genero = generoField.getText();
                     String direccion = direccionField.getText();
-                    // Insertar el jugador en la base de datos
-                    insertarJugador(nombre, apellido, genero, direccion);
+
+                    // Lógica para agregar un nuevo jugador a la base de datos
+                    // Insertar los datos en la base de datos
+                    // Actualizar la tabla de jugadores con el nuevo jugador
+                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
                 }
             });
-            add(guardar);
-        }
+            panelAgregar.add(agregarButton);
 
-        private void insertarJugador(String nombre, String apellido, String genero, String direccion) {
-            // Lógica para insertar el jugador en la base de datos
-            // Puedes usar la conexión a la base de datos para ejecutar una consulta SQL INSERT
-            // Por ejemplo:
-            // INSERT INTO Players (first_name, last_name, gender, address) VALUES ('nombre', 'apellido', 'genero', 'direccion');
-            // No olvides manejar las excepciones y mostrar mensajes de éxito o error
-            try {
-                Connection conexion = ConexionBD.getConexion();
-                PreparedStatement statement = conexion.prepareStatement("INSERT INTO Players (first_name, last_name, gender, address) VALUES (?, ?, ?, ?)");
-                statement.setString(1, nombre);
-                statement.setString(2, apellido);
-                statement.setString(3, genero);
-                statement.setString(4, direccion);
-                int filasInsertadas = statement.executeUpdate();
-                if (filasInsertadas > 0) {
-                    JOptionPane.showMessageDialog(null, "Jugador insertado correctamente");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Error al insertar jugador");
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al insertar jugador: " + ex.getMessage());
-            }
+            add(panelAgregar, BorderLayout.SOUTH);
         }
     }
 
-    // Clase para crear componentes reutilizables de inserción de equipos
-    static class PanelInsertarEquipo extends JPanel {
-        public PanelInsertarEquipo() {
-            setLayout(new GridLayout(3, 2));
-            add(new JLabel("Nombre del Equipo:"));
-            JTextField nombreEquipoField = new JTextField();
-            add(nombreEquipoField);
-            add(new JLabel("ID del Jugador Creador:"));
-            JTextField idCreadorField = new JTextField();
-            add(idCreadorField);
-            JButton guardar = new JButton("Guardar");
-            guardar.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    // Obtener los datos del equipo
-                    String nombreEquipo = nombreEquipoField.getText();
-                    int idCreador = Integer.parseInt(idCreadorField.getText());
-                    // Insertar el equipo en la base de datos
-                    insertarEquipo(nombreEquipo, idCreador);
-                }
-            });
-            add(guardar);
-        }
+    // Clase para crear el panel de equipos
+    static class PanelEquipos extends JPanel {
+        private JTable equiposTable;
+        private DefaultTableModel tableModel;
 
-        private void insertarEquipo(String nombreEquipo, int idCreador) {
-            // Lógica para insertar el equipo en la base de datos
-            // Puedes usar la conexión a la base de datos para ejecutar una consulta SQL INSERT
-            // Por ejemplo:
-            // INSERT INTO Teams (created_by_player_id, team_name) VALUES (idCreador, 'nombreEquipo');
-            // No olvides manejar las excepciones y mostrar mensajes de éxito o error
-            try {
-                Connection conexion = ConexionBD.getConexion();
-                PreparedStatement statement = conexion.prepareStatement("INSERT INTO Teams (created_by_player_id, team_name) VALUES (?, ?)");
-                statement.setInt(1, idCreador);
-                statement.setString(2, nombreEquipo);
-                int filasInsertadas = statement.executeUpdate();
-                if (filasInsertadas > 0) {
-                    JOptionPane.showMessageDialog(null, "Equipo insertado correctamente");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Error al insertar equipo");
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al insertar equipo: " + ex.getMessage());
-            }
-        }
-    }
-
-    // Clase para crear componentes reutilizables de inserción de partidos
-    static class PanelInsertarPartido extends JPanel {
-        public PanelInsertarPartido() {
-            setLayout(new GridLayout(4, 2));
-            add(new JLabel("Código del Juego:"));
-            JTextField codigoJuegoField = new JTextField();
-            add(codigoJuegoField);
-            add(new JLabel("ID del Jugador 1:"));
-            JTextField idJugador1Field = new JTextField();
-            add(idJugador1Field);
-            add(new JLabel("ID del Jugador 2:"));
-            JTextField idJugador2Field = new JTextField();
-            add(idJugador2Field);
-            add(new JLabel("Resultado (win/lose/draw):"));
-            JTextField resultadoField = new JTextField();
-            add(resultadoField);
-
-            JButton guardar = new JButton("Guardar");
-            guardar.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    // Obtener los datos del partido
-                    int codigoJuego = Integer.parseInt(codigoJuegoField.getText());
-                    int idJugador1 = Integer.parseInt(idJugador1Field.getText());
-                    int idJugador2 = Integer.parseInt(idJugador2Field.getText());
-                    String resultado = resultadoField.getText();
-                    // Insertar el partido en la base de datos
-                    insertarPartido(codigoJuego, idJugador1, idJugador2, resultado);
-                }
-            });
-            add(guardar);
-        }
-
-        private void insertarPartido(int codigoJuego, int idJugador1, int idJugador2, String resultado) {
-            // Lógica para insertar el partido en la base de datos
-            // Puedes usar la conexión a la base de datos para ejecutar una consulta SQL INSERT
-            // Por ejemplo:
-            // INSERT INTO Matches (game_code, player_1_id, player_2_id, result) VALUES (codigoJuego, idJugador1, idJugador2, 'resultado');
-            // No olvides manejar las excepciones y mostrar mensajes de éxito o error
-            try {
-                Connection conexion = ConexionBD.getConexion();
-                PreparedStatement statement = conexion.prepareStatement("INSERT INTO Matches (game_code, player_1_id, player_2_id, result) VALUES (?, ?, ?, ?)");
-                statement.setInt(1, codigoJuego);
-                statement.setInt(2, idJugador1);
-                statement.setInt(3, idJugador2);
-                statement.setString(4, resultado);
-                int filasInsertadas = statement.executeUpdate();
-                if (filasInsertadas > 0) {
-                    JOptionPane.showMessageDialog(null, "Partido insertado correctamente");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Error al insertar partido");
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al insertar partido: " + ex.getMessage());
-            }
-        }
-    }
-
-    // Clase para crear componentes reutilizables de inserción de ligas
-    static class PanelInsertarLiga extends JPanel {
-        public PanelInsertarLiga() {
-            setLayout(new GridLayout(3, 2));
-            add(new JLabel("Nombre de la Liga:"));
-            JTextField nombreLigaField = new JTextField();
-            add(nombreLigaField);
-            add(new JLabel("Detalles de la Liga:"));
-            JTextField detallesLigaField = new JTextField();
-            add(detallesLigaField);
-            JButton guardar = new JButton("Guardar");
-            guardar.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    // Obtener los datos de la liga
-                    String nombreLiga = nombreLigaField.getText();
-                    String detallesLiga = detallesLigaField.getText();
-                    // Insertar la liga en la base de datos
-                    insertarLiga(nombreLiga, detallesLiga);
-                }
-            });
-            add(guardar);
-        }
-
-        private void insertarLiga(String nombreLiga, String detallesLiga) {
-            // Lógica para insertar la liga en la base de datos
-            // Puedes usar la conexión a la base de datos para ejecutar una consulta SQL INSERT
-            // Por ejemplo:
-            // INSERT INTO Leagues (league_name, league_details) VALUES ('nombreLiga', 'detallesLiga');
-            // No olvides manejar las excepciones y mostrar mensajes de éxito o error
-            try {
-                Connection conexion = ConexionBD.getConexion();
-                PreparedStatement statement = conexion.prepareStatement("INSERT INTO Leagues (league_name, league_details) VALUES (?, ?)");
-                statement.setString(1, nombreLiga);
-                statement.setString(2, detallesLiga);
-                int filasInsertadas = statement.executeUpdate();
-                if (filasInsertadas > 0) {
-                    JOptionPane.showMessageDialog(null, "Liga insertada correctamente");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Error al insertar liga");
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al insertar liga: " + ex.getMessage());
-            }
-        }
-    }
-
-    // Clase para crear componentes reutilizables de inserción de juegos
-    static class PanelInsertarJuego extends JPanel {
-        public PanelInsertarJuego() {
-            setLayout(new GridLayout(3, 2));
-            add(new JLabel("Nombre del Juego:"));
-            JTextField nombreJuegoField = new JTextField();
-            add(nombreJuegoField);
-            add(new JLabel("Descripción del Juego:"));
-            JTextField descripcionJuegoField = new JTextField();
-            add(descripcionJuegoField);
-            JButton guardar = new JButton("Guardar");
-            guardar.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    // Obtener los datos del juego
-                    String nombreJuego = nombreJuegoField.getText();
-                    String descripcionJuego = descripcionJuegoField.getText();
-                    // Insertar el juego en la base de datos
-                    insertarJuego(nombreJuego, descripcionJuego);
-                }
-            });
-            add(guardar);
-        }
-
-        private void insertarJuego(String nombreJuego, String descripcionJuego) {
-            // Lógica para insertar el juego en la base de datos
-            // Puedes usar la conexión a la base de datos para ejecutar una consulta SQL INSERT
-            // Por ejemplo:
-            // INSERT INTO Games (game_name, game_description) VALUES ('nombreJuego', 'descripcionJuego');
-            // No olvides manejar las excepciones y mostrar mensajes de éxito o error
-            try {
-                Connection conexion = ConexionBD.getConexion();
-                PreparedStatement statement = conexion.prepareStatement("INSERT INTO Games (game_name, game_description) VALUES (?, ?)");
-                statement.setString(1, nombreJuego);
-                statement.setString(2, descripcionJuego);
-                int filasInsertadas = statement.executeUpdate();
-                if (filasInsertadas > 0) {
-                    JOptionPane.showMessageDialog(null, "Juego insertado correctamente");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Error al insertar juego");
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al insertar juego: " + ex.getMessage());
-            }
-        }
-    }
-
-    // Clase para crear componentes reutilizables de clasificación
-    static class PanelClasificacion extends JPanel {
-        public PanelClasificacion() {
+        public PanelEquipos() {
             setLayout(new BorderLayout());
-            JTextArea areaTexto = new JTextArea();
-            areaTexto.setEditable(false);
-            JScrollPane scrollPane = new JScrollPane(areaTexto);
+
+            // Crear tabla para mostrar equipos
+            tableModel = new DefaultTableModel();
+            tableModel.addColumn("ID");
+            tableModel.addColumn("Nombre");
+            tableModel.addColumn("Creado por");
+            tableModel.addColumn("Fecha de Creación");
+            tableModel.addColumn("Fecha de Disolución");
+
+            equiposTable = new JTable(tableModel);
+            JScrollPane scrollPane = new JScrollPane(equiposTable);
             add(scrollPane, BorderLayout.CENTER);
-            JButton actualizar = new JButton("Actualizar Clasificación");
-            actualizar.addActionListener(new ActionListener() {
+
+            // Panel para agregar nuevos equipos
+            JPanel panelAgregar = new JPanel(new GridLayout(3, 2));
+            panelAgregar.setBorder(BorderFactory.createTitledBorder("Agregar Equipo"));
+
+            JTextField nombreField = new JTextField();
+            JTextField creadoPorField = new JTextField();
+            JTextField fechaCreacionField = new JTextField();
+            JTextField fechaDisolucionField = new JTextField();
+
+            panelAgregar.add(new JLabel("Nombre:"));
+            panelAgregar.add(nombreField);
+            panelAgregar.add(new JLabel("Creado por (ID del Jugador):"));
+            panelAgregar.add(creadoPorField);
+            panelAgregar.add(new JLabel("Fecha de Creación:"));
+            panelAgregar.add(fechaCreacionField);
+            panelAgregar.add(new JLabel("Fecha de Disolución:"));
+            panelAgregar.add(fechaDisolucionField);
+
+            JButton agregarButton = new JButton("Agregar");
+            agregarButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    // Obtener clasificación y mostrarla en el área de texto
-                    String clasificacion = obtenerClasificacion();
-                    areaTexto.setText(clasificacion);
+                    String nombre = nombreField.getText();
+                    int creadoPor = Integer.parseInt(creadoPorField.getText());
+                    String fechaCreacion = fechaCreacionField.getText();
+                    String fechaDisolucion = fechaDisolucionField.getText();
+
+                    // Lógica para agregar un nuevo equipo a la base de datos
+                    // Insertar los datos en la base de datos
+                    // Actualizar la tabla de equipos con el nuevo equipo
+                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
                 }
             });
-            add(actualizar, BorderLayout.SOUTH);
-        }
+            panelAgregar.add(agregarButton);
 
-        private String obtenerClasificacion() {
-            // Lógica para obtener la clasificación de los jugadores en los juegos
-            // Puedes usar la conexión a la base de datos para ejecutar una consulta SQL SELECT
-            // y obtener los datos de clasificación
-            // Por ejemplo:
-            // SELECT p.first_name, p.last_name, g.game_name, pgr.ranking FROM Players p
-            // JOIN Players_Game_Ranking pgr ON p.player_id = pgr.player_id
-            // JOIN Games g ON pgr.game_code = g.game_code
-            // ORDER BY g.game_name, pgr.ranking;
-            // No olvides manejar las excepciones y devolver la clasificación como una cadena formateada
-            StringBuilder clasificacion = new StringBuilder();
-            try {
-                Connection conexion = ConexionBD.getConexion();
-                Statement statement = conexion.createStatement();
-                ResultSet resultSet = statement.executeQuery("SELECT p.first_name, p.last_name, g.game_name, pgr.ranking FROM Players p JOIN Players_Game_Ranking pgr ON p.player_id = pgr.player_id JOIN Games g ON pgr.game_code = g.game_code ORDER BY g.game_name, pgr.ranking");
-                while (resultSet.next()) {
-                    String nombre = resultSet.getString("first_name");
-                    String apellido = resultSet.getString("last_name");
-                    String juego = resultSet.getString("game_name");
-                    int ranking = resultSet.getInt("ranking");
-                    clasificacion.append(juego).append(": ").append(nombre).append(" ").append(apellido).append(" - Ranking: ").append(ranking).append("\n");
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al obtener clasificación: " + ex.getMessage());
-            }
-            return clasificacion.toString();
+            add(panelAgregar, BorderLayout.SOUTH);
         }
     }
 
+    // Clase para crear el panel de ligas
+    static class PanelLigas extends JPanel {
+        private JTable ligasTable;
+        private DefaultTableModel tableModel;
+
+        public PanelLigas() {
+            setLayout(new BorderLayout());
+
+            // Crear tabla para mostrar ligas
+            tableModel = new DefaultTableModel();
+            tableModel.addColumn("ID");
+            tableModel.addColumn("Nombre");
+            tableModel.addColumn("Detalles");
+
+            ligasTable = new JTable(tableModel);
+            JScrollPane scrollPane = new JScrollPane(ligasTable);
+            add(scrollPane, BorderLayout.CENTER);
+
+            // Panel para agregar nuevas ligas
+            JPanel panelAgregar = new JPanel(new GridLayout(2, 2));
+            panelAgregar.setBorder(BorderFactory.createTitledBorder("Agregar Liga"));
+
+            JTextField nombreField = new JTextField();
+            JTextField detallesField = new JTextField();
+
+            panelAgregar.add(new JLabel("Nombre:"));
+            panelAgregar.add(nombreField);
+            panelAgregar.add(new JLabel("Detalles:"));
+            panelAgregar.add(detallesField);
+
+            JButton agregarButton = new JButton("Agregar");
+            agregarButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String nombre = nombreField.getText();
+                    String detalles = detallesField.getText();
+
+                    // Lógica para agregar una nueva liga a la base de datos
+                    // Insertar los datos en la base de datos
+                    // Actualizar la tabla de ligas con la nueva liga
+                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
+                }
+            });
+            panelAgregar.add(agregarButton);
+
+            add(panelAgregar, BorderLayout.SOUTH);
+        }
+    }
+
+    // Clase para crear el panel de juegos
+    static class PanelJuegos extends JPanel {
+        private JTable juegosTable;
+        private DefaultTableModel tableModel;
+
+        public PanelJuegos() {
+            setLayout(new BorderLayout());
+
+            // Crear tabla para mostrar juegos
+            tableModel = new DefaultTableModel();
+            tableModel.addColumn("Código");
+            tableModel.addColumn("Nombre");
+            tableModel.addColumn("Descripción");
+
+            juegosTable = new JTable(tableModel);
+            JScrollPane scrollPane = new JScrollPane(juegosTable);
+            add(scrollPane, BorderLayout.CENTER);
+
+            // Panel para agregar nuevos juegos
+            JPanel panelAgregar = new JPanel(new GridLayout(2, 2));
+            panelAgregar.setBorder(BorderFactory.createTitledBorder("Agregar Juego"));
+
+            JTextField nombreField = new JTextField();
+            JTextField descripcionField = new JTextField();
+
+            panelAgregar.add(new JLabel("Nombre:"));
+            panelAgregar.add(nombreField);
+            panelAgregar.add(new JLabel("Descripción:"));
+            panelAgregar.add(descripcionField);
+
+            JButton agregarButton = new JButton("Agregar");
+            agregarButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String nombre = nombreField.getText();
+                    String descripcion = descripcionField.getText();
+
+                    // Lógica para agregar un nuevo juego a la base de datos
+                    // Insertar los datos en la base de datos
+                    // Actualizar la tabla de juegos con el nuevo juego
+                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
+                }
+            });
+            panelAgregar.add(agregarButton);
+
+            add(panelAgregar, BorderLayout.SOUTH);
+        }
+    }
+
+    // Clase para crear el panel de partidos
+    static class PanelPartidos extends JPanel {
+        private JTable partidosTable;
+        private DefaultTableModel tableModel;
+
+        public PanelPartidos() {
+            setLayout(new BorderLayout());
+
+            // Crear tabla para mostrar partidos
+            tableModel = new DefaultTableModel();
+            tableModel.addColumn("ID");
+            tableModel.addColumn("Código de Juego");
+            tableModel.addColumn("Jugador 1");
+            tableModel.addColumn("Jugador 2");
+            tableModel.addColumn("Fecha");
+            tableModel.addColumn("Resultado");
+
+            partidosTable = new JTable(tableModel);
+            JScrollPane scrollPane = new JScrollPane(partidosTable);
+            add(scrollPane, BorderLayout.CENTER);
+
+            // Panel para agregar nuevos partidos
+            JPanel panelAgregar = new JPanel(new GridLayout(3, 2));
+            panelAgregar.setBorder(BorderFactory.createTitledBorder("Agregar Partido"));
+
+            JTextField codigoJuegoField = new JTextField();
+            JTextField jugador1Field = new JTextField();
+            JTextField jugador2Field = new JTextField();
+            JTextField fechaField = new JTextField();
+            JTextField resultadoField = new JTextField();
+
+            panelAgregar.add(new JLabel("Código de Juego:"));
+            panelAgregar.add(codigoJuegoField);
+            panelAgregar.add(new JLabel("Jugador 1:"));
+            panelAgregar.add(jugador1Field);
+            panelAgregar.add(new JLabel("Jugador 2:"));
+            panelAgregar.add(jugador2Field);
+            panelAgregar.add(new JLabel("Fecha:"));
+            panelAgregar.add(fechaField);
+            panelAgregar.add(new JLabel("Resultado:"));
+            panelAgregar.add(resultadoField);
+
+            JButton agregarButton = new JButton("Agregar");
+            agregarButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    int codigoJuego = Integer.parseInt(codigoJuegoField.getText());
+                    int jugador1 = Integer.parseInt(jugador1Field.getText());
+                    int jugador2 = Integer.parseInt(jugador2Field.getText());
+                    String fecha = fechaField.getText();
+                    String resultado = resultadoField.getText();
+
+                    // Lógica para agregar un nuevo partido a la base de datos
+                    // Insertar los datos en la base de datos
+                    // Actualizar la tabla de partidos con el nuevo partido
+                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
+                }
+            });
+            panelAgregar.add(agregarButton);
+
+            add(panelAgregar, BorderLayout.SOUTH);
+        }
+    }
+
+    // Clase para crear el panel de procesos de negocio
+    static class PanelProcesos extends JPanel {
+        public PanelProcesos() {
+            setLayout(new GridLayout(2, 1));
+
+            // Panel para asignar jugadores a equipos
+            JPanel panelAsignarJugadores = new JPanel(new BorderLayout());
+            panelAsignarJugadores.setBorder(BorderFactory.createTitledBorder("Asignar Jugadores a Equipos"));
+
+            JComboBox<String> equiposComboBox = new JComboBox<>();
+            JComboBox<String> jugadoresComboBox = new JComboBox<>();
+
+            // Llenar los ComboBox con datos de la base de datos (equipos y jugadores)
+
+            JButton asignarButton = new JButton("Asignar");
+            asignarButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String equipoSeleccionado = (String) equiposComboBox.getSelectedItem();
+                    String jugadorSeleccionado = (String) jugadoresComboBox.getSelectedItem();
+
+                    // Lógica para asignar jugador seleccionado al equipo seleccionado
+                    // Actualizar la base de datos con la asignación
+                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
+                }
+            });
+
+            panelAsignarJugadores.add(equiposComboBox, BorderLayout.NORTH);
+            panelAsignarJugadores.add(jugadoresComboBox, BorderLayout.CENTER);
+            panelAsignarJugadores.add(asignarButton, BorderLayout.SOUTH);
+
+            // Panel para organizar partidos dentro de ligas
+            JPanel panelOrganizarPartidos = new JPanel(new BorderLayout());
+            panelOrganizarPartidos.setBorder(BorderFactory.createTitledBorder("Organizar Partidos dentro de Ligas"));
+
+            JComboBox<String> ligasComboBox = new JComboBox<>();
+            JComboBox<String> juegosComboBox = new JComboBox<>();
+
+            // Llenar los ComboBox con datos de la base de datos (ligas y juegos)
+
+            JButton organizarButton = new JButton("Organizar");
+            organizarButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String ligaSeleccionada = (String) ligasComboBox.getSelectedItem();
+                    String juegoSeleccionado = (String) juegosComboBox.getSelectedItem();
+
+                    // Lógica para organizar partidos del juego seleccionado dentro de la liga seleccionada
+                    // Actualizar la base de datos con los partidos organizados
+                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
+                }
+            });
+
+            panelOrganizarPartidos.add(ligasComboBox, BorderLayout.NORTH);
+            panelOrganizarPartidos.add(juegosComboBox, BorderLayout.CENTER);
+            panelOrganizarPartidos.add(organizarButton, BorderLayout.SOUTH);
+
+            add(panelAsignarJugadores);
+            add(panelOrganizarPartidos);
+        }
+    }
+
+    // Clase para crear el panel de reportes
+    static class PanelReportes extends JPanel {
+        public PanelReportes() {
+            setLayout(new GridLayout(3, 1));
+
+            // Reporte: Jugadores más destacados en cada juego
+            JButton jugadoresDestacadosBtn = new JButton("Reporte: Jugadores Destacados en Cada Juego");
+            jugadoresDestacadosBtn.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    // Lógica para generar el reporte de jugadores más destacados en cada juego
+                    // Consultar la base de datos y generar el reporte
+                    // Mostrar el reporte en una ventana o archivo
+                }
+            });
+
+            // Reporte: Rendimiento de equipos en las ligas
+            JButton rendimientoEquiposBtn = new JButton("Reporte: Rendimiento de Equipos en las Ligas");
+            rendimientoEquiposBtn.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    // Lógica para generar el reporte de rendimiento de equipos en las ligas
+                    // Consultar la base de datos y generar el reporte
+                    // Mostrar el reporte en una ventana o archivo
+                }
+            });
+
+            // Reporte: Historial de partidos de cada jugador
+            JButton historialPartidosBtn = new JButton("Reporte: Historial de Partidos de Cada Jugador");
+            historialPartidosBtn.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    // Lógica para generar el reporte de historial de partidos de cada jugador
+                    // Consultar la base de datos y generar el reporte
+                    // Mostrar el reporte en una ventana o archivo
+                }
+            });
+
+            add(jugadoresDestacadosBtn);
+            add(rendimientoEquiposBtn);
+            add(historialPartidosBtn);
+        }
+    }
     // Clases de servicio y utilidades
     class ConexionBD {
         private static Connection conexion;
