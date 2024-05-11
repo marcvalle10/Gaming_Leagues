@@ -1,4 +1,9 @@
 # Proyecto Final del Curso:
+# Nombres de Integrantes de Equipo:
+-->	Vallejo Leyva Marcos 
+-->	Brianna Yaliczia Castillo Grijalva
+-->	Daniela Garcia Lopez
+
 
 # Gaming_Leagues
 
