@@ -4,6 +4,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
+import java.util.Random;
+import java.util.List;
+import java.util.ArrayList;
+
 
 
 // Clases de servicio y utilidades
@@ -697,32 +701,45 @@ public class AplicacionDeportiva {
             JPanel panelOrganizarPartidoLigas = new JPanel(new BorderLayout());
             panelOrganizarPartidoLigas.setBorder(BorderFactory.createTitledBorder("Organizar Partido entre Ligas"));
 
-            JComboBox<String> ligasComboBox = new JComboBox<>();
-            JComboBox<String> equiposComboBoxLiga1 = new JComboBox<>();
-            JComboBox<String> equiposComboBoxLiga2 = new JComboBox<>();
+            JComboBox<String> ligasComboBox1 = new JComboBox<>();
 
-            cargarLigasEnComboBox(ligasComboBox); // Método para cargar las ligas en el ComboBox
-            cargarEquiposEnComboBox(equiposComboBoxLiga1); // Método para cargar los equipos de la primera liga en el ComboBox
-            cargarEquiposEnComboBox(equiposComboBoxLiga2); // Método para cargar los equipos de la segunda liga en el ComboBox
+            JComboBox<String> equiposComboBoxLiga1 = new JComboBox<>();
+
+
+            cargarLigasEnComboBox(ligasComboBox1); // Método para cargar las ligas en el ComboBox 1
+            //cargarLigasEnComboBox(ligasComboBox2); // Método para cargar las ligas en el ComboBox 2
+
+// Acción al seleccionar una liga en el ComboBox 1
+            ligasComboBox1.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String ligaSeleccionada = (String) ligasComboBox1.getSelectedItem();
+                    cargarLigasEnComboBox( equiposComboBoxLiga1); // Método para cargar los equipos de la liga seleccionada en el ComboBox 1
+                }
+            });
 
             JButton organizarPartidoButtonLigas = new JButton("Organizar Partido");
             organizarPartidoButtonLigas.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    String ligaSeleccionada = (String) ligasComboBox.getSelectedItem();
+                    String liga1Seleccionada = (String) ligasComboBox1.getSelectedItem();
                     String equipo1Seleccionado = (String) equiposComboBoxLiga1.getSelectedItem();
-                    String equipo2Seleccionado = (String) equiposComboBoxLiga2.getSelectedItem();
 
-                    // Lógica para organizar partido entre los dos equipos de las ligas seleccionadas
+
+                    // Lógica para organizar partido entre los equipos de las ligas seleccionadas
                     // Implementa aquí tu lógica para organizar el partido entre los equipos seleccionados de las ligas seleccionadas
                 }
             });
 
-            panelOrganizarPartidoLigas.add(ligasComboBox, BorderLayout.NORTH);
+// Crear paneles para los JComboBox de las ligas y equipos
+            JPanel ligasPanel = new JPanel(new GridLayout(1, 2));
+            ligasPanel.add(ligasComboBox1);
+
+
+            panelOrganizarPartidoLigas.add(ligasPanel, BorderLayout.NORTH);
             panelOrganizarPartidoLigas.add(equiposComboBoxLiga1, BorderLayout.CENTER);
-            panelOrganizarPartidoLigas.add(equiposComboBoxLiga2, BorderLayout.CENTER);
             panelOrganizarPartidoLigas.add(organizarPartidoButtonLigas, BorderLayout.SOUTH);
 
-            // Panel para organizar partidos entre equipos de una misma liga
+
+
             // Panel para organizar partidos entre equipos de una misma liga
             JPanel panelOrganizarPartidoLigaUnica = new JPanel(new BorderLayout());
             panelOrganizarPartidoLigaUnica.setBorder(BorderFactory.createTitledBorder("Organizar Partido entre Equipos de una Liga"));
@@ -834,6 +851,98 @@ public class AplicacionDeportiva {
             }
         }
 
+        private void organizarPartidoEntreJugadores(String jugador1Seleccionado, String jugador2Seleccionado) {
+            try {
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                PreparedStatement preparedStmt = conn.prepareStatement("INSERT INTO Matches (game_code, player_1_id, player_2_id, match_date) VALUES (?, ?, ?, CURRENT_DATE)");
+                preparedStmt.setInt(1, obtenerCodigoJuegoPorNombre("NombreDelJuego")); // Reemplaza "NombreDelJuego" por el nombre del juego
+                preparedStmt.setInt(2, obtenerIdJugadorPorNombre(jugador1Seleccionado));
+                preparedStmt.setInt(3, obtenerIdJugadorPorNombre(jugador2Seleccionado));
+                preparedStmt.executeUpdate();
+                conn.close();
+                JOptionPane.showMessageDialog(null, "Partido entre jugadores organizado exitosamente");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error al organizar el partido entre jugadores");
+            }
+        }
+
+        private void organizarPartidoEntreLigas(String ligaSeleccionada) {
+            try {
+                List<String> equiposLiga = obtenerEquiposDeLiga(ligaSeleccionada);
+
+                if (equiposLiga.size() < 2) {
+                    JOptionPane.showMessageDialog(null, "No hay suficientes equipos en la liga seleccionada para organizar un partido");
+                    return;
+                }
+
+                Random random = new Random();
+                int indiceEquipo1 = random.nextInt(equiposLiga.size());
+                int indiceEquipo2 = random.nextInt(equiposLiga.size());
+
+                while (indiceEquipo2 == indiceEquipo1) {
+                    indiceEquipo2 = random.nextInt(equiposLiga.size());
+                }
+
+                String equipo1Seleccionado = equiposLiga.get(indiceEquipo1);
+                String equipo2Seleccionado = equiposLiga.get(indiceEquipo2);
+
+                organizarPartidoEntreEquiposDeLiga(ligaSeleccionada, equipo1Seleccionado, equipo2Seleccionado);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error al organizar el partido entre ligas");
+            }
+        }
+
+        private void organizarPartidoEntreEquiposDeLiga(String ligaSeleccionada, String equipo1Seleccionado, String equipo2Seleccionado) {
+            try {
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                PreparedStatement preparedStmt = conn.prepareStatement("INSERT INTO Matches (game_code, player_1_id, player_2_id, match_date) VALUES (?, ?, ?, CURRENT_DATE)");
+                preparedStmt.setInt(1, obtenerCodigoJuegoPorNombre("NombreDelJuego")); // Reemplaza "NombreDelJuego" por el nombre del juego
+                preparedStmt.setInt(2, obtenerIdEquipoPorNombre(equipo1Seleccionado));
+                preparedStmt.setInt(3, obtenerIdEquipoPorNombre(equipo2Seleccionado));
+                preparedStmt.executeUpdate();
+                conn.close();
+                JOptionPane.showMessageDialog(null, "Partido entre equipos de la misma liga organizado exitosamente");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error al organizar el partido entre equipos de la misma liga");
+            }
+        }
+
+        // Método para obtener el código del juego por su nombre
+        private int obtenerCodigoJuegoPorNombre(String nombreJuego) throws SQLException {
+            int codigoJuego = -1;
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+            PreparedStatement preparedStmt = conn.prepareStatement("SELECT game_code FROM Games WHERE game_name = ?");
+            preparedStmt.setString(1, nombreJuego);
+            ResultSet rs = preparedStmt.executeQuery();
+            if (rs.next()) {
+                codigoJuego = rs.getInt("game_code");
+            }
+            conn.close();
+            return codigoJuego;
+        }
+
+        // Método para obtener los equipos de una liga por su nombre
+        private List<String> obtenerEquiposDeLiga() throws SQLException {
+            return obtenerEquiposDeLiga(null);
+        }
+
+        // Método para obtener los equipos de una liga por su nombre
+        private List<String> obtenerEquiposDeLiga(String nombreLiga) throws SQLException {
+            List<String> equiposLiga = new ArrayList<>();
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+            PreparedStatement preparedStmt = conn.prepareStatement("SELECT team_name FROM Teams WHERE team_id IN (SELECT team_id FROM Teams_Ligas WHERE league_id = (SELECT league_id FROM Leagues WHERE league_name = ?))");
+            preparedStmt.setString(1, nombreLiga);
+            ResultSet rs = preparedStmt.executeQuery();
+            while (rs.next()) {
+                equiposLiga.add(rs.getString("team_name"));
+            }
+            conn.close();
+            return equiposLiga;
+        }
+
         // Obtener ID de equipo por nombre
         private int obtenerIdEquipoPorNombre(String equipoSeleccionado) {
             int teamId = -1;
@@ -908,770 +1017,90 @@ public class AplicacionDeportiva {
 
             // Método para generar el reporte de jugadores más destacados en cada juego
             private void generarReporteJugadoresDestacados() {
-                // Lógica para generar el reporte de jugadores más destacados en cada juego
-                // Consultar la base de datos y generar el reporte
-                // Mostrar el reporte en una ventana o archivo
+                try {
+                    // Establecer conexión con la base de datos
+                    Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+
+                    // Consultar la base de datos para obtener los jugadores más destacados en cada juego
+                    // Ejecutar la consulta y obtener los resultados
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery("SELECT game_name, player_name FROM player_stats ORDER BY score DESC");
+
+                    // Procesar los resultados y generar el reporte
+                    while (rs.next()) {
+                        String juego = rs.getString("game_name");
+                        String jugador = rs.getString("player_name");
+
+                        // Aquí puedes imprimir o almacenar los resultados como desees
+                        System.out.println("Juego: " + juego + ", Jugador destacado: " + jugador);
+                    }
+
+                    // Cerrar la conexión con la base de datos
+                    conn.close();
+                } catch (SQLException ex) {
+                    // Manejar excepciones
+                    ex.printStackTrace();
+                }
             }
 
             // Método para generar el reporte de rendimiento de equipos en las ligas
             private void generarReporteRendimientoEquipos() {
-                // Lógica para generar el reporte de rendimiento de equipos en las ligas
-                // Consultar la base de datos y generar el reporte
-                // Mostrar el reporte en una ventana o archivo
+                try {
+                    // Establecer conexión con la base de datos
+                    Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+
+                    // Consultar la base de datos para obtener el rendimiento de equipos en las ligas
+                    // Ejecutar la consulta y obtener los resultados
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery("SELECT league_name, team_name, wins, losses FROM team_performance");
+
+                    // Procesar los resultados y generar el reporte
+                    while (rs.next()) {
+                        String liga = rs.getString("league_name");
+                        String equipo = rs.getString("team_name");
+                        int victorias = rs.getInt("wins");
+                        int derrotas = rs.getInt("losses");
+
+                        // Aquí puedes imprimir o almacenar los resultados como desees
+                        System.out.println("Liga: " + liga + ", Equipo: " + equipo + ", Victorias: " + victorias + ", Derrotas: " + derrotas);
+                    }
+
+                    // Cerrar la conexión con la base de datos
+                    conn.close();
+                } catch (SQLException ex) {
+                    // Manejar excepciones
+                    ex.printStackTrace();
+                }
             }
 
             // Método para generar el reporte de historial de partidos de cada jugador
             private void generarReporteHistorialPartidos() {
-                // Lógica para generar el reporte de historial de partidos de cada jugador
-                // Consultar la base de datos y generar el reporte
-                // Mostrar el reporte en una ventana o archivo
+                try {
+                    // Establecer conexión con la base de datos
+                    Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+
+                    // Consultar la base de datos para obtener el historial de partidos de cada jugador
+                    // Ejecutar la consulta y obtener los resultados
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery("SELECT player_name, match_date, opponent FROM player_matches ORDER BY match_date DESC");
+
+                    // Procesar los resultados y generar el reporte
+                    while (rs.next()) {
+                        String jugador = rs.getString("player_name");
+                        Date fecha = rs.getDate("match_date");
+                        String oponente = rs.getString("opponent");
+
+                        // Aquí puedes imprimir o almacenar los resultados como desees
+                        System.out.println("Jugador: " + jugador + ", Fecha del partido: " + fecha + ", Oponente: " + oponente);
+                    }
+
+                    // Cerrar la conexión con la base de datos
+                    conn.close();
+                } catch (SQLException ex) {
+                    // Manejar excepciones
+                    ex.printStackTrace();
+                }
             }
+
         }
-
-
-    }
-
-
-    public class Entidades {
-        // Clases de entidades
-        class Jugador {
-            private int playerId;
-            private String firstName;
-            private String lastName;
-            private String gender;
-            private String address;
-
-            public Jugador(int playerId, String firstName, String lastName, String gender, String address) {
-                this.playerId = playerId;
-                this.firstName = firstName;
-                this.lastName = lastName;
-                this.gender = gender;
-                this.address = address;
-            }
-
-            // Método para agregar un nuevo jugador a la base de datos
-            public void agregarJugador() {
-                String sql = "INSERT INTO Players (first_name, last_name, gender, address) VALUES (?, ?, ?, ?)";
-                try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                     PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setString(1, this.firstName);
-                    stmt.setString(2, this.lastName);
-                    stmt.setString(3, this.gender);
-                    stmt.setString(4, this.address);
-                    stmt.executeUpdate();
-                    System.out.println("Jugador agregado con éxito.");
-                } catch (SQLException e) {
-                    System.out.println("Error al agregar jugador: " + e.getMessage());
-                }
-            }
-
-            // Método para modificar un jugador existente
-            public void modificarJugador() {
-                String sql = "UPDATE Players SET first_name = ?, last_name = ?, gender = ?, address = ? WHERE player_id = ?";
-                try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                     PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setString(1, this.firstName);
-                    stmt.setString(2, this.lastName);
-                    stmt.setString(3, this.gender);
-                    stmt.setString(4, this.address);
-                    stmt.setInt(5, this.playerId);
-                    int affectedRows = stmt.executeUpdate();
-                    if (affectedRows > 0) {
-                        System.out.println("Jugador actualizado con éxito.");
-                    } else {
-                        System.out.println("No se encontró un jugador con el ID especificado.");
-                    }
-                } catch (SQLException e) {
-                    System.out.println("Error al modificar jugador: " + e.getMessage());
-                }
-            }
-
-            // Método para eliminar un jugador de la base de datos
-            public void eliminarJugador() {
-                String sql = "DELETE FROM Players WHERE player_id = ?";
-                try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                     PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setInt(1, this.playerId);
-                    int rowsAffected = stmt.executeUpdate();
-                    if (rowsAffected > 0) {
-                        System.out.println("Jugador eliminado con éxito.");
-                    } else {
-                        System.out.println("No se encontró un jugador para eliminar con el ID especificado.");
-                    }
-                } catch (SQLException e) {
-                    System.out.println("Error al eliminar jugador: " + e.getMessage());
-                }
-            }
-
-            // Método para visualizar detalles de un jugador
-            public void visualizarJugador() {
-                String sql = "SELECT * FROM Players WHERE player_id = ?";
-                try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                     PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setInt(1, this.playerId);
-                    ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
-                        System.out.println("Jugador ID: " + rs.getInt("player_id") +
-                                ", Nombre: " + rs.getString("first_name") + " " + rs.getString("last_name") +
-                                ", Género: " + rs.getString("gender") +
-                                ", Dirección: " + rs.getString("address"));
-                    } else {
-                        System.out.println("No se encontró un jugador con el ID especificado.");
-                    }
-                } catch (SQLException e) {
-                    System.out.println("Error al visualizar jugador: " + e.getMessage());
-                }
-            }
-
-            // Getters y Setters
-            public int getPlayerId() {
-                return playerId;
-            }
-
-            public String getFirstName() {
-                return firstName;
-            }
-
-            public String getLastName() {
-                return lastName;
-            }
-
-            public String getGender() {
-                return gender;
-            }
-
-            public String getAddress() {
-                return address;
-            }
-
-            public void setPlayerId(int playerId) {
-                this.playerId = playerId;
-            }
-
-            public void setFirstName(String firstName) {
-                this.firstName = firstName;
-            }
-
-            public void setLastName(String lastName) {
-                this.lastName = lastName;
-            }
-
-            public void setGender(String gender) {
-                this.gender = gender;
-            }
-
-            public void setAddress(String address) {
-                this.address = address;
-            }
-
-            public class Direccion {
-                private int playerId; // El ID del jugador para vincular la dirección, si se separa en una tabla independiente en el futuro.
-                private String address;
-
-                public Direccion(int playerId, String address) {
-                    this.playerId = playerId;
-                    this.address = address;
-                }
-
-                // Getters y Setters
-                public int getPlayerId() {
-                    return playerId;
-                }
-
-                public void setPlayerId(int playerId) {
-                    this.playerId = playerId;
-                }
-
-                public String getAddress() {
-                    return address;
-                }
-
-                public void setAddress(String address) {
-                    this.address = address;
-                }
-
-                // Métodos para interacción con la base de datos podrían incluir:
-                public void actualizarDireccion() {
-                    String sql = "UPDATE Players SET address = ? WHERE player_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setString(1, this.address);
-                        stmt.setInt(2, this.playerId);
-                        int affectedRows = stmt.executeUpdate();
-                        if (affectedRows > 0) {
-                            System.out.println("Dirección actualizada con éxito para el jugador con ID: " + playerId);
-                        } else {
-                            System.out.println("No se encontró un jugador con el ID especificado para actualizar la dirección.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al actualizar la dirección: " + e.getMessage());
-                    }
-                }
-            }
-
-
-            public class Juego {
-                private int gameCode;
-                private String gameName;
-                private String gameDescription;
-
-                public Juego(int gameCode, String gameName, String gameDescription) {
-                    this.gameCode = gameCode;
-                    this.gameName = gameName;
-                    this.gameDescription = gameDescription;
-                }
-
-                // Getters y Setters
-                public int getGameCode() {
-                    return gameCode;
-                }
-
-                public void setGameCode(int gameCode) {
-                    this.gameCode = gameCode;
-                }
-
-                public String getGameName() {
-                    return gameName;
-                }
-
-                public void setGameName(String gameName) {
-                    this.gameName = gameName;
-                }
-
-                public String getGameDescription() {
-                    return gameDescription;
-                }
-
-                public void setGameDescription(String gameDescription) {
-                    this.gameDescription = gameDescription;
-                }
-
-                // Método para agregar un nuevo juego a la base de datos
-                public void agregarJuego() {
-                    String sql = "INSERT INTO Games (game_name, game_description) VALUES (?, ?)";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setString(1, this.gameName);
-                        stmt.setString(2, this.gameDescription);
-                        stmt.executeUpdate();
-                        System.out.println("Juego agregado con éxito.");
-                    } catch (SQLException e) {
-                        System.out.println("Error al agregar juego: " + e.getMessage());
-                    }
-                }
-
-                // Método para modificar un juego existente
-                public void modificarJuego() {
-                    String sql = "UPDATE Games SET game_name = ?, game_description = ? WHERE game_code = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setString(1, this.gameName);
-                        stmt.setString(2, this.gameDescription);
-                        stmt.setInt(3, this.gameCode);
-                        int affectedRows = stmt.executeUpdate();
-                        if (affectedRows > 0) {
-                            System.out.println("Juego actualizado con éxito.");
-                        } else {
-                            System.out.println("No se encontró un juego con el código especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al modificar juego: " + e.getMessage());
-                    }
-                }
-
-                // Método para eliminar un juego
-                public void eliminarJuego() {
-                    String sql = "DELETE FROM Games WHERE game_code = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.gameCode);
-                        int rowsAffected = stmt.executeUpdate();
-                        if (rowsAffected > 0) {
-                            System.out.println("Juego eliminado con éxito.");
-                        } else {
-                            System.out.println("No se encontró un juego para eliminar con el código especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al eliminar juego: " + e.getMessage());
-                    }
-                }
-
-                // Método para visualizar detalles de un juego
-                public void visualizarJuego() {
-                    String sql = "SELECT game_code, game_name, game_description FROM Games WHERE game_code = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.gameCode);
-                        ResultSet rs = stmt.executeQuery();
-                        if (rs.next()) {
-                            System.out.println("Código de Juego: " + rs.getInt("game_code") +
-                                    ", Nombre: " + rs.getString("game_name") +
-                                    ", Descripción: " + rs.getString("game_description"));
-                        } else {
-                            System.out.println("No se encontró un juego con el código especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al visualizar juego: " + e.getMessage());
-                    }
-                }
-            }
-
-            public class Liga {
-                private int leagueId;
-                private String leagueName;
-                private String leagueDetails;
-
-                public Liga(int leagueId, String leagueName, String leagueDetails) {
-                    this.leagueId = leagueId;
-                    this.leagueName = leagueName;
-                    this.leagueDetails = leagueDetails;
-                }
-
-                // Getters y Setters
-                public int getLeagueId() {
-                    return leagueId;
-                }
-
-                public void setLeagueId(int leagueId) {
-                    this.leagueId = leagueId;
-                }
-
-                public String getLeagueName() {
-                    return leagueName;
-                }
-
-                public void setLeagueName(String leagueName) {
-                    this.leagueName = leagueName;
-                }
-
-                public String getLeagueDetails() {
-                    return leagueDetails;
-                }
-
-                public void setLeagueDetails(String leagueDetails) {
-                    this.leagueDetails = leagueDetails;
-                }
-
-                // Método para agregar una nueva liga a la base de datos
-                public void crearLiga() {
-                    String sql = "INSERT INTO Leagues (league_name, league_details) VALUES (?, ?)";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setString(1, this.leagueName);
-                        stmt.setString(2, this.leagueDetails);
-                        stmt.executeUpdate();
-                        System.out.println("Liga creada con éxito.");
-                    } catch (SQLException e) {
-                        System.out.println("Error al crear liga: " + e.getMessage());
-                    }
-                }
-
-                // Método para modificar una liga existente
-                public void modificarLiga() {
-                    String sql = "UPDATE Leagues SET league_name = ?, league_details = ? WHERE league_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setString(1, this.leagueName);
-                        stmt.setString(2, this.leagueDetails);
-                        stmt.setInt(3, this.leagueId);
-                        int affectedRows = stmt.executeUpdate();
-                        if (affectedRows > 0) {
-                            System.out.println("Liga actualizada con éxito.");
-                        } else {
-                            System.out.println("No se encontró una liga con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al modificar liga: " + e.getMessage());
-                    }
-                }
-
-                // Método para eliminar una liga
-                public void eliminarLiga() {
-                    String sql = "DELETE FROM Leagues WHERE league_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.leagueId);
-                        int rowsAffected = stmt.executeUpdate();
-                        if (rowsAffected > 0) {
-                            System.out.println("Liga eliminada con éxito.");
-                        } else {
-                            System.out.println("No se encontró una liga para eliminar con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al eliminar liga: " + e.getMessage());
-                    }
-                }
-
-                // Método para visualizar detalles de una liga
-                public void visualizarLiga() {
-                    String sql = "SELECT league_id, league_name, league_details FROM Leagues WHERE league_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.leagueId);
-                        ResultSet rs = stmt.executeQuery();
-                        if (rs.next()) {
-                            System.out.println("Liga ID: " + rs.getInt("league_id") +
-                                    ", Nombre: " + rs.getString("league_name") +
-                                    ", Detalles: " + rs.getString("league_details"));
-                        } else {
-                            System.out.println("No se encontró una liga con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al visualizar liga: " + e.getMessage());
-                    }
-                }
-            }
-
-            public class Equipo {
-                private int teamId;
-                private int createdByPlayerId;
-                private String teamName;
-                private LocalDate dateCreated;
-                private LocalDate dateDisbanded;
-
-                public Equipo(int teamId, int createdByPlayerId, String teamName, LocalDate dateCreated, LocalDate dateDisbanded) {
-                    this.teamId = teamId;
-                    this.createdByPlayerId = createdByPlayerId;
-                    this.teamName = teamName;
-                    this.dateCreated = dateCreated;
-                    this.dateDisbanded = dateDisbanded;
-                }
-
-                // Getters and setters
-                public int getTeamId() {
-                    return teamId;
-                }
-
-                public void setTeamId(int teamId) {
-                    this.teamId = teamId;
-                }
-
-                public int getCreatedByPlayerId() {
-                    return createdByPlayerId;
-                }
-
-                public void setCreatedByPlayerId(int createdByPlayerId) {
-                    this.createdByPlayerId = createdByPlayerId;
-                }
-
-                public String getTeamName() {
-                    return teamName;
-                }
-
-                public void setTeamName(String teamName) {
-                    this.teamName = teamName;
-                }
-
-                public LocalDate getDateCreated() {
-                    return dateCreated;
-                }
-
-                public void setDateCreated(LocalDate dateCreated) {
-                    this.dateCreated = dateCreated;
-                }
-
-                public LocalDate getDateDisbanded() {
-                    return dateDisbanded;
-                }
-
-                public void setDateDisbanded(LocalDate dateDisbanded) {
-                    this.dateDisbanded = dateDisbanded;
-                }
-
-                // Métodos CRUD
-                public void crearEquipo() {
-                    String sql = "INSERT INTO Teams (created_by_player_id, team_name, date_created) VALUES (?, ?, ?)";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.createdByPlayerId);
-                        stmt.setString(2, this.teamName);
-                        stmt.setDate(3, java.sql.Date.valueOf(this.dateCreated));
-                        stmt.executeUpdate();
-                        System.out.println("Equipo creado con éxito.");
-                    } catch (SQLException e) {
-                        System.out.println("Error al crear equipo: " + e.getMessage());
-                    }
-                }
-
-                public void modificarEquipo() {
-                    String sql = "UPDATE Teams SET team_name = ?, date_disbanded = ? WHERE team_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setString(1, this.teamName);
-                        stmt.setDate(2, java.sql.Date.valueOf(this.dateDisbanded));
-                        stmt.setInt(3, this.teamId);
-                        int affectedRows = stmt.executeUpdate();
-                        if (affectedRows > 0) {
-                            System.out.println("Equipo actualizado con éxito.");
-                        } else {
-                            System.out.println("No se encontró un equipo con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al modificar equipo: " + e.getMessage());
-                    }
-                }
-
-                public void eliminarEquipo() {
-                    String sql = "DELETE FROM Teams WHERE team_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.teamId);
-                        int rowsAffected = stmt.executeUpdate();
-                        if (rowsAffected > 0) {
-                            System.out.println("Equipo eliminado con éxito.");
-                        } else {
-                            System.out.println("No se encontró un equipo para eliminar con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al eliminar equipo: " + e.getMessage());
-                    }
-                }
-
-                // Método para visualizar detalles de un equipo
-                public void visualizarEquipo() {
-                    String sql = "SELECT team_id, created_by_player_id, team_name, date_created, date_disbanded FROM Teams WHERE team_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.teamId);
-                        ResultSet rs = stmt.executeQuery();
-                        if (rs.next()) {
-                            System.out.println("Equipo ID: " + rs.getInt("team_id") +
-                                    ", Creado por Jugador ID: " + rs.getInt("created_by_player_id") +
-                                    ", Nombre: " + rs.getString("team_name") +
-                                    ", Fecha de Creación: " + rs.getDate("date_created") +
-                                    ", Fecha de Disolución: " + rs.getDate("date_disbanded"));
-                        } else {
-                            System.out.println("No se encontró un equipo con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al visualizar equipo: " + e.getMessage());
-                    }
-                }
-            }
-
-            public class Partido {
-                private int matchId;
-                private int gameCode;
-                private int player1Id;
-                private int player2Id;
-                private LocalDate matchDate;
-                private String result;
-
-                public Partido(int matchId, int gameCode, int player1Id, int player2Id, LocalDate matchDate, String result) {
-                    this.matchId = matchId;
-                    this.gameCode = gameCode;
-                    this.player1Id = player1Id;
-                    this.player2Id = player2Id;
-                    this.matchDate = matchDate;
-                    this.result = result;
-                }
-
-                // Getters and Setters
-                public int getMatchId() {
-                    return matchId;
-                }
-
-                public void setMatchId(int matchId) {
-                    this.matchId = matchId;
-                }
-
-                public int getGameCode() {
-                    return gameCode;
-                }
-
-                public void setGameCode(int gameCode) {
-                    this.gameCode = gameCode;
-                }
-
-                public int getPlayer1Id() {
-                    return player1Id;
-                }
-
-                public void setPlayer1Id(int player1Id) {
-                    this.player1Id = player1Id;
-                }
-
-                public int getPlayer2Id() {
-                    return player2Id;
-                }
-
-                public void setPlayer2Id(int player2Id) {
-                    this.player2Id = player2Id;
-                }
-
-                public LocalDate getMatchDate() {
-                    return matchDate;
-                }
-
-                public void setMatchDate(LocalDate matchDate) {
-                    this.matchDate = matchDate;
-                }
-
-                public String getResult() {
-                    return result;
-                }
-
-                public void setResult(String result) {
-                    this.result = result;
-                }
-
-                // Método para agregar un nuevo partido
-                public void agregarPartido() {
-                    String sql = "INSERT INTO Matches (game_code, player_1_id, player_2_id, match_date, result) VALUES (?, ?, ?, ?, ?)";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.gameCode);
-                        stmt.setInt(2, this.player1Id);
-                        stmt.setInt(3, this.player2Id);
-                        stmt.setDate(4, java.sql.Date.valueOf(this.matchDate));
-                        stmt.setString(5, this.result);
-                        stmt.executeUpdate();
-                        System.out.println("Partido agregado con éxito.");
-                    } catch (SQLException e) {
-                        System.out.println("Error al agregar partido: " + e.getMessage());
-                    }
-                }
-
-                // Método para actualizar un partido
-                public void modificarPartido() {
-                    String sql = "UPDATE Matches SET game_code = ?, player_1_id = ?, player_2_id = ?, match_date = ?, result = ? WHERE match_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.gameCode);
-                        stmt.setInt(2, this.player1Id);
-                        stmt.setInt(3, this.player2Id);
-                        stmt.setDate(4, java.sql.Date.valueOf(this.matchDate));
-                        stmt.setString(5, this.result);
-                        stmt.setInt(6, this.matchId);
-                        int affectedRows = stmt.executeUpdate();
-                        if (affectedRows > 0) {
-                            System.out.println("Partido actualizado con éxito.");
-                        } else {
-                            System.out.println("No se encontró un partido con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al modificar partido: " + e.getMessage());
-                    }
-                }
-
-                // Método para eliminar un partido
-                public void eliminarPartido() {
-                    String sql = "DELETE FROM Matches WHERE match_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.matchId);
-                        int rowsAffected = stmt.executeUpdate();
-                        if (rowsAffected > 0) {
-                            System.out.println("Partido eliminado con éxito.");
-                        } else {
-                            System.out.println("No se encontró un partido para eliminar con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al eliminar partido: " + e.getMessage());
-                    }
-                }
-
-                // Método para visualizar detalles de un partido
-                public void visualizarPartido() {
-                    String sql = "SELECT match_id, game_code, player_1_id, player_2_id, match_date, result FROM Matches WHERE match_id = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.matchId);
-                        ResultSet rs = stmt.executeQuery();
-                        if (rs.next()) {
-                            System.out.println("Partido ID: " + rs.getInt("match_id") +
-                                    ", Código de Juego: " + rs.getInt("game_code") +
-                                    ", Jugador 1 ID: " + rs.getInt("player_1_id") +
-                                    ", Jugador 2 ID: " + rs.getInt("player_2_id") +
-                                    ", Fecha del Partido: " + rs.getDate("match_date") +
-                                    ", Resultado: " + rs.getString("result"));
-                        } else {
-                            System.out.println("No se encontró un partido con el ID especificado.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al visualizar partido: " + e.getMessage());
-                    }
-                }
-            }
-
-
-            public class Ranking {
-                private int playerId;
-                private int gameCode;
-                private int ranking;
-
-                public Ranking(int playerId, int gameCode, int ranking) {
-                    this.playerId = playerId;
-                    this.gameCode = gameCode;
-                    this.ranking = ranking;
-                }
-
-                // Getters y Setters
-                public int getPlayerId() {
-                    return playerId;
-                }
-
-                public void setPlayerId(int playerId) {
-                    this.playerId = playerId;
-                }
-
-                public int getGameCode() {
-                    return gameCode;
-                }
-
-                public void setGameCode(int gameCode) {
-                    this.gameCode = gameCode;
-                }
-
-                public int getRanking() {
-                    return ranking;
-                }
-
-                public void setRanking(int ranking) {
-                    this.ranking = ranking;
-                }
-
-                // Método para actualizar el ranking de un jugador en un juego
-                public void actualizarRanking() {
-                    String sql = "UPDATE Players_Game_Ranking SET ranking = ? WHERE player_id = ? AND game_code = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.ranking);
-                        stmt.setInt(2, this.playerId);
-                        stmt.setInt(3, this.gameCode);
-                        int affectedRows = stmt.executeUpdate();
-                        if (affectedRows > 0) {
-                            System.out.println("Ranking actualizado con éxito.");
-                        } else {
-                            System.out.println("No se encontró el ranking para actualizar.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al actualizar el ranking: " + e.getMessage());
-                    }
-                }
-
-                // Método para visualizar el ranking de un jugador para un juego específico
-                public void visualizarRanking() {
-                    String sql = "SELECT ranking FROM Players_Game_Ranking WHERE player_id = ? AND game_code = ?";
-                    try (Connection conn = AplicacionDeportiva.ConexionBD.getConexion();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
-                        stmt.setInt(1, this.playerId);
-                        stmt.setInt(2, this.gameCode);
-                        ResultSet rs = stmt.executeQuery();
-                        if (rs.next()) {
-                            System.out.println("Ranking actual: " + rs.getInt("ranking") +
-                                    " para el Jugador ID: " + this.playerId +
-                                    " en el Juego ID: " + this.gameCode);
-                        } else {
-                            System.out.println("No se encontró ranking para mostrar.");
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Error al visualizar el ranking: " + e.getMessage());
-                    }
-                }
-            }
-        }
-    }
-
-
 }
