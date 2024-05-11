@@ -4,7 +4,43 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
-import java.time.LocalDate;
+
+
+// Clases de servicio y utilidades
+class ConexionBD {
+    private static Connection conexion;
+
+    // Datos para la conexión a PostgreSQL
+    private static final String URL = "jdbc:postgresql://localhost:5432/Gaming_Leagues";
+    private static final String USER = "developer";
+    private static final String PASSWORD = "23100132";
+
+    // Método para establecer conexión con la base de datos
+    public static void conectar() {
+        try {
+            conexion = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.println("Conexión establecida con éxito.");
+        } catch (SQLException e) {
+            System.out.println("Error al conectar a la base de datos: " + e.getMessage());
+        }
+    }
+
+    // Método para desconectar la base de datos
+    public static void desconectar() {
+        if (conexion != null) {
+            try {
+                conexion.close();
+                System.out.println("Conexión cerrada con éxito.");
+            } catch (SQLException e) {
+                System.out.println("Error al cerrar la conexión: " + e.getMessage());
+            }
+        }
+    }
+
+    public static Connection getConexion() {
+        return conexion;
+    }
+}
 
 // Clase principal de la aplicación
 public class AplicacionDeportiva {
@@ -573,13 +609,15 @@ public class AplicacionDeportiva {
                 e.printStackTrace();
             }
         }
-
-        // Método para cerrar la conexión a la base de datos
-
     }
 
     // Clase para crear el panel de procesos de negocio
     static class PanelProcesos extends JPanel {
+        // Definir las conexiones con la base de datos como variables de clase
+        static Connection conn;
+        static Statement stmt;
+        static ResultSet rs;
+
         public PanelProcesos() {
             setLayout(new GridLayout(2, 1));
 
@@ -590,7 +628,8 @@ public class AplicacionDeportiva {
             JComboBox<String> equiposComboBox = new JComboBox<>();
             JComboBox<String> jugadoresComboBox = new JComboBox<>();
 
-            // Llenar los ComboBox con datos de la base de datos (equipos y jugadores)
+            cargarEquiposEnComboBox(equiposComboBox);
+            cargarJugadoresEnComboBox(jugadoresComboBox);
 
             JButton asignarButton = new JButton("Asignar");
             asignarButton.addActionListener(new ActionListener() {
@@ -599,8 +638,29 @@ public class AplicacionDeportiva {
                     String jugadorSeleccionado = (String) jugadoresComboBox.getSelectedItem();
 
                     // Lógica para asignar jugador seleccionado al equipo seleccionado
-                    // Actualizar la base de datos con la asignación
-                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
+                    try {
+                        // Abrir conexión con la base de datos
+                        conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+
+                        // Preparar la consulta SQL para actualizar la base de datos con la asignación
+                        String query = "UPDATE players SET teams = ? WHERE nombre = ?";
+                        PreparedStatement preparedStmt = conn.prepareStatement(query);
+                        preparedStmt.setString(1, equipoSeleccionado);
+                        preparedStmt.setString(2, jugadorSeleccionado);
+
+                        // Ejecutar la consulta
+                        preparedStmt.executeUpdate();
+
+                        // Cerrar la conexión con la base de datos
+                        conn.close();
+
+                        // Mostrar mensaje de éxito
+                        JOptionPane.showMessageDialog(null, "Asignación exitosa");
+                    } catch (SQLException ex) {
+                        // Manejar excepciones y mostrar mensaje de error
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error al asignar jugador al equipo");
+                    }
                 }
             });
 
@@ -608,128 +668,269 @@ public class AplicacionDeportiva {
             panelAsignarJugadores.add(jugadoresComboBox, BorderLayout.CENTER);
             panelAsignarJugadores.add(asignarButton, BorderLayout.SOUTH);
 
-            // Panel para organizar partidos dentro de ligas
-            JPanel panelOrganizarPartidos = new JPanel(new BorderLayout());
-            panelOrganizarPartidos.setBorder(BorderFactory.createTitledBorder("Organizar Partidos dentro de Ligas"));
+            // Panel para organizar partidos entre dos jugadores
+            JPanel panelOrganizarPartidoJugadores = new JPanel(new BorderLayout());
+            panelOrganizarPartidoJugadores.setBorder(BorderFactory.createTitledBorder("Organizar Partido entre Jugadores"));
+
+            JComboBox<String> jugadoresComboBox1 = new JComboBox<>();
+            JComboBox<String> jugadoresComboBox2 = new JComboBox<>();
+
+            cargarJugadoresEnComboBox(jugadoresComboBox1);
+            cargarJugadoresEnComboBox(jugadoresComboBox2);
+
+            JButton organizarPartidoButton = new JButton("Organizar Partido");
+            organizarPartidoButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String jugador1Seleccionado = (String) jugadoresComboBox1.getSelectedItem();
+                    String jugador2Seleccionado = (String) jugadoresComboBox2.getSelectedItem();
+
+                    // Lógica para organizar partido entre los dos jugadores seleccionados
+                    // Implementa aquí tu lógica para organizar el partido entre los jugadores seleccionados
+                }
+            });
+
+            panelOrganizarPartidoJugadores.add(jugadoresComboBox1, BorderLayout.NORTH);
+            panelOrganizarPartidoJugadores.add(jugadoresComboBox2, BorderLayout.CENTER);
+            panelOrganizarPartidoJugadores.add(organizarPartidoButton, BorderLayout.SOUTH);
+
+            // Panel para organizar partidos entre ligas
+            JPanel panelOrganizarPartidoLigas = new JPanel(new BorderLayout());
+            panelOrganizarPartidoLigas.setBorder(BorderFactory.createTitledBorder("Organizar Partido entre Ligas"));
 
             JComboBox<String> ligasComboBox = new JComboBox<>();
-            JComboBox<String> juegosComboBox = new JComboBox<>();
+            JComboBox<String> equiposComboBoxLiga1 = new JComboBox<>();
+            JComboBox<String> equiposComboBoxLiga2 = new JComboBox<>();
 
-            // Llenar los ComboBox con datos de la base de datos (ligas y juegos)
+            cargarLigasEnComboBox(ligasComboBox); // Método para cargar las ligas en el ComboBox
+            cargarEquiposEnComboBox(equiposComboBoxLiga1); // Método para cargar los equipos de la primera liga en el ComboBox
+            cargarEquiposEnComboBox(equiposComboBoxLiga2); // Método para cargar los equipos de la segunda liga en el ComboBox
 
-            JButton organizarButton = new JButton("Organizar");
-            organizarButton.addActionListener(new ActionListener() {
+            JButton organizarPartidoButtonLigas = new JButton("Organizar Partido");
+            organizarPartidoButtonLigas.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     String ligaSeleccionada = (String) ligasComboBox.getSelectedItem();
-                    String juegoSeleccionado = (String) juegosComboBox.getSelectedItem();
+                    String equipo1Seleccionado = (String) equiposComboBoxLiga1.getSelectedItem();
+                    String equipo2Seleccionado = (String) equiposComboBoxLiga2.getSelectedItem();
 
-                    // Lógica para organizar partidos del juego seleccionado dentro de la liga seleccionada
-                    // Actualizar la base de datos con los partidos organizados
-                    // Manejar posibles excepciones y mostrar mensajes de éxito o error
+                    // Lógica para organizar partido entre los dos equipos de las ligas seleccionadas
+                    // Implementa aquí tu lógica para organizar el partido entre los equipos seleccionados de las ligas seleccionadas
                 }
             });
 
-            panelOrganizarPartidos.add(ligasComboBox, BorderLayout.NORTH);
-            panelOrganizarPartidos.add(juegosComboBox, BorderLayout.CENTER);
-            panelOrganizarPartidos.add(organizarButton, BorderLayout.SOUTH);
+            panelOrganizarPartidoLigas.add(ligasComboBox, BorderLayout.NORTH);
+            panelOrganizarPartidoLigas.add(equiposComboBoxLiga1, BorderLayout.CENTER);
+            panelOrganizarPartidoLigas.add(equiposComboBoxLiga2, BorderLayout.CENTER);
+            panelOrganizarPartidoLigas.add(organizarPartidoButtonLigas, BorderLayout.SOUTH);
+
+            // Panel para organizar partidos entre equipos de una misma liga
+            // Panel para organizar partidos entre equipos de una misma liga
+            JPanel panelOrganizarPartidoLigaUnica = new JPanel(new BorderLayout());
+            panelOrganizarPartidoLigaUnica.setBorder(BorderFactory.createTitledBorder("Organizar Partido entre Equipos de una Liga"));
+
+            JComboBox<String> ligaUnicaComboBox = new JComboBox<>();
+            JComboBox<String> equiposComboBoxLigaUnica1 = new JComboBox<>();
+            JComboBox<String> equiposComboBoxLigaUnica2 = new JComboBox<>();
+
+            cargarLigasEnComboBox(ligaUnicaComboBox); // Método para cargar las ligas en el ComboBox
+            cargarEquiposEnComboBox(equiposComboBoxLigaUnica1); // Método para cargar los equipos de la liga en el ComboBox
+            cargarEquiposEnComboBox(equiposComboBoxLigaUnica2); // Método para cargar los equipos de la liga en el ComboBox
+
+            JButton organizarPartidoButtonLigaUnica = new JButton("Organizar Partido");
+            organizarPartidoButtonLigaUnica.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String ligaSeleccionada = (String) ligaUnicaComboBox.getSelectedItem();
+                    String equipo1Seleccionado = (String) equiposComboBoxLigaUnica1.getSelectedItem();
+                    String equipo2Seleccionado = (String) equiposComboBoxLigaUnica2.getSelectedItem();
+
+                    // Lógica para organizar partido entre los dos equipos de la misma liga seleccionada
+                    // Implementa aquí tu lógica para organizar el partido entre los equipos seleccionados de la misma liga
+                }
+            });
+
+// Crear paneles para los JComboBox de los equipos
+            JPanel equiposPanel = new JPanel(new GridLayout(1, 2));
+            equiposPanel.add(equiposComboBoxLigaUnica1);
+            equiposPanel.add(equiposComboBoxLigaUnica2);
+
+            panelOrganizarPartidoLigaUnica.add(ligaUnicaComboBox, BorderLayout.NORTH);
+            panelOrganizarPartidoLigaUnica.add(equiposPanel, BorderLayout.CENTER);
+            panelOrganizarPartidoLigaUnica.add(organizarPartidoButtonLigaUnica, BorderLayout.SOUTH);
+
+
 
             add(panelAsignarJugadores);
-            add(panelOrganizarPartidos);
-        }
-    }
+            add(panelOrganizarPartidoJugadores);
+            add(panelOrganizarPartidoLigas);
+            add(panelOrganizarPartidoLigaUnica);
 
-    // Clase para crear el panel de reportes
-    static class PanelReportes extends JPanel {
-        public PanelReportes() {
-            setLayout(new GridLayout(3, 1));
-
-            // Reporte: Jugadores más destacados en cada juego
-            JButton jugadoresDestacadosBtn = new JButton("Reporte: Jugadores Destacados en Cada Juego");
-            jugadoresDestacadosBtn.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    generarReporteJugadoresDestacados();
-                }
-            });
-
-            // Reporte: Rendimiento de equipos en las ligas
-            JButton rendimientoEquiposBtn = new JButton("Reporte: Rendimiento de Equipos en las Ligas");
-            rendimientoEquiposBtn.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    generarReporteRendimientoEquipos();
-                }
-            });
-
-            // Reporte: Historial de partidos de cada jugador
-            JButton historialPartidosBtn = new JButton("Reporte: Historial de Partidos de Cada Jugador");
-            historialPartidosBtn.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    generarReporteHistorialPartidos();
-                }
-            });
-
-            add(jugadoresDestacadosBtn);
-            add(rendimientoEquiposBtn);
-            add(historialPartidosBtn);
         }
 
-        // Método para generar el reporte de jugadores más destacados en cada juego
-        private void generarReporteJugadoresDestacados() {
-            // Lógica para generar el reporte de jugadores más destacados en cada juego
-            // Consultar la base de datos y generar el reporte
-            // Mostrar el reporte en una ventana o archivo
-        }
+        // Métodos para cargar datos en ComboBox
 
-        // Método para generar el reporte de rendimiento de equipos en las ligas
-        private void generarReporteRendimientoEquipos() {
-            // Lógica para generar el reporte de rendimiento de equipos en las ligas
-            // Consultar la base de datos y generar el reporte
-            // Mostrar el reporte en una ventana o archivo
-        }
-
-        // Método para generar el reporte de historial de partidos de cada jugador
-        private void generarReporteHistorialPartidos() {
-            // Lógica para generar el reporte de historial de partidos de cada jugador
-            // Consultar la base de datos y generar el reporte
-            // Mostrar el reporte en una ventana o archivo
-        }
-    }
-
-
-    // Clases de servicio y utilidades
-    class ConexionBD {
-        private static Connection conexion;
-
-        // Datos para la conexión a PostgreSQL
-        private static final String URL = "jdbc:postgresql://localhost:5432/Gaming_Leagues";
-        private static final String USER = "developer";
-        private static final String PASSWORD = "23100132";
-
-        // Método para establecer conexión con la base de datos
-        public static void conectar() {
+        private void cargarEquiposEnComboBox(JComboBox<String> comboBox) {
             try {
-                conexion = DriverManager.getConnection(URL, USER, PASSWORD);
-                System.out.println("Conexión establecida con éxito.");
-            } catch (SQLException e) {
-                System.out.println("Error al conectar a la base de datos: " + e.getMessage());
-            }
-        }
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT team_name FROM teams");
 
-        // Método para desconectar la base de datos
-        public static void desconectar() {
-            if (conexion != null) {
-                try {
-                    conexion.close();
-                    System.out.println("Conexión cerrada con éxito.");
-                } catch (SQLException e) {
-                    System.out.println("Error al cerrar la conexión: " + e.getMessage());
+                while (rs.next()) {
+                    comboBox.addItem(rs.getString("team_name"));
                 }
+
+                conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error al cargar equipos desde la base de datos");
             }
         }
 
-        public static Connection getConexion() {
-            return conexion;
+        private void cargarJugadoresEnComboBox(JComboBox<String> comboBox) {
+            try {
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT first_name, last_name FROM players");
+
+                while (rs.next()) {
+                    comboBox.addItem(rs.getString("first_name") + " " + rs.getString("last_name"));
+                }
+
+                conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error al cargar jugadores desde la base de datos");
+            }
+        }
+
+        private void cargarLigasEnComboBox(JComboBox<String> comboBox) {
+            try {
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT league_name FROM leagues");
+
+                while (rs.next()) {
+                    comboBox.addItem(rs.getString("league_name"));
+                }
+
+                conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error al cargar las ligas desde la base de datos");
+            }
+        }
+
+        // Lógica para asignar jugador seleccionado al equipo seleccionado
+        private void asignarJugadorAEquipo(String equipoSeleccionado, String jugadorSeleccionado) {
+            try {
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                PreparedStatement preparedStmt = conn.prepareStatement("INSERT INTO Team_Players (team_id, player_id, date_from) VALUES (?, ?, CURRENT_DATE)");
+                preparedStmt.setInt(1, obtenerIdEquipoPorNombre(equipoSeleccionado));
+                preparedStmt.setInt(2, obtenerIdJugadorPorNombre(jugadorSeleccionado));
+                preparedStmt.executeUpdate();
+                conn.close();
+                JOptionPane.showMessageDialog(null, "Asignación exitosa");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error al asignar jugador al equipo");
+            }
+        }
+
+        // Obtener ID de equipo por nombre
+        private int obtenerIdEquipoPorNombre(String equipoSeleccionado) {
+            int teamId = -1;
+            try {
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                PreparedStatement preparedStmt = conn.prepareStatement("SELECT team_id FROM Teams WHERE team_name = ?");
+                preparedStmt.setString(1, equipoSeleccionado);
+                ResultSet rs = preparedStmt.executeQuery();
+                if (rs.next()) {
+                    teamId = rs.getInt("team_id");
+                }
+                conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            return teamId;
+        }
+
+        // Obtener ID de jugador por nombre
+        private int obtenerIdJugadorPorNombre(String jugadorSeleccionado) {
+            int playerId = -1;
+            try {
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                PreparedStatement preparedStmt = conn.prepareStatement("SELECT player_id FROM Players WHERE first_name || ' ' || last_name = ?");
+                preparedStmt.setString(1, jugadorSeleccionado);
+                ResultSet rs = preparedStmt.executeQuery();
+                if (rs.next()) {
+                    playerId = rs.getInt("player_id");
+                }
+                conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            return playerId;
         }
     }
+
+
+        // Clase para crear el panel de reportes
+        static class PanelReportes extends JPanel {
+            public PanelReportes() {
+                setLayout(new GridLayout(3, 1));
+
+                // Reporte: Jugadores más destacados en cada juego
+                JButton jugadoresDestacadosBtn = new JButton("Reporte: Jugadores Destacados en Cada Juego");
+                jugadoresDestacadosBtn.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        generarReporteJugadoresDestacados();
+                    }
+                });
+
+                // Reporte: Rendimiento de equipos en las ligas
+                JButton rendimientoEquiposBtn = new JButton("Reporte: Rendimiento de Equipos en las Ligas");
+                rendimientoEquiposBtn.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        generarReporteRendimientoEquipos();
+                    }
+                });
+
+                // Reporte: Historial de partidos de cada jugador
+                JButton historialPartidosBtn = new JButton("Reporte: Historial de Partidos de Cada Jugador");
+                historialPartidosBtn.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        generarReporteHistorialPartidos();
+                    }
+                });
+
+                add(jugadoresDestacadosBtn);
+                add(rendimientoEquiposBtn);
+                add(historialPartidosBtn);
+            }
+
+            // Método para generar el reporte de jugadores más destacados en cada juego
+            private void generarReporteJugadoresDestacados() {
+                // Lógica para generar el reporte de jugadores más destacados en cada juego
+                // Consultar la base de datos y generar el reporte
+                // Mostrar el reporte en una ventana o archivo
+            }
+
+            // Método para generar el reporte de rendimiento de equipos en las ligas
+            private void generarReporteRendimientoEquipos() {
+                // Lógica para generar el reporte de rendimiento de equipos en las ligas
+                // Consultar la base de datos y generar el reporte
+                // Mostrar el reporte en una ventana o archivo
+            }
+
+            // Método para generar el reporte de historial de partidos de cada jugador
+            private void generarReporteHistorialPartidos() {
+                // Lógica para generar el reporte de historial de partidos de cada jugador
+                // Consultar la base de datos y generar el reporte
+                // Mostrar el reporte en una ventana o archivo
+            }
+        }
+
+
+    }
+
 
     public class Entidades {
         // Clases de entidades
