@@ -4,10 +4,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
+import java.text.ParseException;
 import java.util.Random;
 import java.util.List;
 import java.util.ArrayList;
-
+import java.text.SimpleDateFormat;
 
 
 // Clases de servicio y utilidades
@@ -52,7 +53,7 @@ public class AplicacionDeportiva {
     private static JPanel mainPanel;
     private static JTabbedPane tabbedPane;
 
-    public static void main(String[] args) {
+    public void main(String[] args) {
         SwingUtilities.invokeLater(() -> crearYMostrarGUI());
     }
 
@@ -70,6 +71,8 @@ public class AplicacionDeportiva {
         tabbedPane.addTab("Ligas", new PanelLigas());
         tabbedPane.addTab("Juegos", new PanelJuegos());
         tabbedPane.addTab("Partidos", new PanelPartidos());
+        tabbedPane.addTab("Jugadores/Equipos", new PanelJE());
+        tabbedPane.addTab("Ligas/Equipos", new PanelLE());
         tabbedPane.addTab("Procesos de Negocio", new PanelProcesos());
         tabbedPane.addTab("Reportes", new PanelReportes());
 
@@ -615,6 +618,220 @@ public class AplicacionDeportiva {
         }
     }
 
+    // Clase para crear el panel de relación entre Jugadores y Equipos
+    static class PanelJE extends JPanel {
+        private JTable JETable;
+        private DefaultTableModel tableModel;
+        private Connection connection;
+
+        public PanelJE() {
+            setLayout(new BorderLayout());
+
+            // Crear tabla para mostrar relación entre Jugadores y Equipos
+            tableModel = new DefaultTableModel();
+            tableModel.addColumn("ID_Jugador");
+            tableModel.addColumn("ID_Equipo");
+            tableModel.addColumn("Fecha_Asignacion");
+
+            JETable = new JTable(tableModel);
+            JScrollPane scrollPane = new JScrollPane(JETable);
+            add(scrollPane, BorderLayout.CENTER);
+
+            // Panel para asignar jugadores a equipos
+            JPanel panelAsignar = new JPanel(new GridLayout(2, 2));
+            panelAsignar.setBorder(BorderFactory.createTitledBorder("Asignar Jugador a Equipo"));
+
+            JTextField ID_JugadorField = new JTextField();
+            JTextField ID_EquipoField = new JTextField();
+            JTextField Fecha_AsignacionField = new JTextField();
+
+            panelAsignar.add(new JLabel("ID_Jugador:"));
+            panelAsignar.add(ID_JugadorField);
+            panelAsignar.add(new JLabel("ID_Equipo:"));
+            panelAsignar.add(ID_EquipoField);
+            panelAsignar.add(new JLabel("Fecha_Asignacion:"));
+            panelAsignar.add(Fecha_AsignacionField);
+
+            JButton asignarButton = new JButton("Asignar");
+            asignarButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String ID_Jugador = ID_JugadorField.getText();
+                    String ID_Equipo = ID_EquipoField.getText();
+                    String Fecha_Asignacion = Fecha_AsignacionField.getText();
+
+                    agregarJugador(ID_Jugador, ID_Equipo, Fecha_Asignacion);
+                }
+            });
+            panelAsignar.add(asignarButton);
+
+            add(panelAsignar, BorderLayout.SOUTH);
+
+            // Establecer conexión a la base de datos
+            ConexionBD.conectar();
+            connection = ConexionBD.getConexion();
+            if (connection != null) {
+                cargarJugadoresEquipos();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al conectar a la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        // Método para cargar la relación entre Jugadores y Equipos desde la base de datos a la tabla
+        private void cargarJugadoresEquipos() {
+            try {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery("SELECT * FROM Players_Teams");
+                while (resultSet.next()) {
+                    int ID_Jugador = resultSet.getInt("player_id");
+                    int ID_Equipo = resultSet.getInt("team_id");
+                    String Fecha_Asignacion = resultSet.getString("date_assigned");
+
+                    tableModel.addRow(new Object[]{ID_Jugador, ID_Equipo, Fecha_Asignacion});
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error al cargar jugadores y equipos desde la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+
+        // Método para asignar un jugador a un equipo en la base de datos y actualizar la tabla
+        private void agregarJugador(String ID_Jugador, String ID_Equipo, String Fecha_Asignacion) {
+            try {
+                int playerID = Integer.parseInt(ID_Jugador);
+                int teamID = Integer.parseInt(ID_Equipo);
+
+                // Convertir la cadena de fecha a un objeto Date
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                java.util.Date parsedDate = sdf.parse(Fecha_Asignacion);
+                java.sql.Date assignedDate = new java.sql.Date(parsedDate.getTime());
+
+                PreparedStatement preparedStatement = connection.prepareStatement(
+                        "INSERT INTO Players_Teams (player_id, team_id, date_assigned) VALUES (?, ?, ?)"
+                );
+                preparedStatement.setInt(1, playerID);
+                preparedStatement.setInt(2, teamID);
+                preparedStatement.setDate(3, assignedDate);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(this, "Jugador asignado a un equipo exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    tableModel.setRowCount(0); // Limpiar la tabla antes de cargar los datos actualizados
+                    cargarJugadoresEquipos(); // Volver a cargar los datos desde la base de datos
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al asignar el jugador.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Formato de fecha incorrecto. Utilice yyyy-MM-dd.", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error al asignar el jugador.", "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+
+    // Clase para crear el panel de relación entre Ligas y Equipos
+    static class PanelLE extends JPanel {
+        private JTable LETable;
+        private DefaultTableModel tableModel;
+        private Connection connection;
+
+        public PanelLE() {
+            setLayout(new BorderLayout());
+
+            // Crear tabla para mostrar relación entre Ligas y Equipos
+            tableModel = new DefaultTableModel();
+            tableModel.addColumn("ID_Liga");
+            tableModel.addColumn("ID_Equipo");
+
+            LETable = new JTable(tableModel);
+            JScrollPane scrollPane = new JScrollPane(LETable);
+            add(scrollPane, BorderLayout.CENTER);
+
+            // Panel para establecer relación entre ligas y equipos
+            JPanel panelRelacion = new JPanel(new GridLayout(2, 2));
+            panelRelacion.setBorder(BorderFactory.createTitledBorder("Establecer Relación entre Liga y Equipo"));
+
+            JTextField ID_LigaField = new JTextField();
+            JTextField ID_EquipoField = new JTextField();
+
+            panelRelacion.add(new JLabel("ID_Liga:"));
+            panelRelacion.add(ID_LigaField);
+            panelRelacion.add(new JLabel("ID_Equipo:"));
+            panelRelacion.add(ID_EquipoField);
+
+            JButton relacionButton = new JButton("Establecer Relación");
+            relacionButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String ID_Liga = ID_LigaField.getText();
+                    String ID_Equipo = ID_EquipoField.getText();
+
+                    establecerRelacionLigaEquipo(ID_Liga, ID_Equipo);
+                }
+            });
+            panelRelacion.add(relacionButton);
+
+            add(panelRelacion, BorderLayout.SOUTH);
+
+            // Establecer conexión a la base de datos
+            ConexionBD.conectar();
+            connection = ConexionBD.getConexion();
+            if (connection != null) {
+                cargarLigasEquipos();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al conectar a la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        // Método para cargar la relación entre Ligas y Equipos desde la base de datos a la tabla
+        private void cargarLigasEquipos() {
+            try {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery("SELECT * FROM Leagues_Teams");
+                while (resultSet.next()) {
+                    int ID_Liga = resultSet.getInt("league_id");
+                    int ID_Equipo = resultSet.getInt("team_id");
+
+                    tableModel.addRow(new Object[]{ID_Liga, ID_Equipo});
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error al cargar la relación entre ligas y equipos desde la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+
+        // Método para establecer la relación entre una liga y un equipo en la base de datos y actualizar la tabla
+        private void establecerRelacionLigaEquipo(String ID_Liga, String ID_Equipo) {
+            try {
+                int leagueID = Integer.parseInt(ID_Liga);
+                int teamID = Integer.parseInt(ID_Equipo);
+
+                PreparedStatement preparedStatement = connection.prepareStatement(
+                        "INSERT INTO Leagues_Teams (league_id, team_id) VALUES (?, ?)"
+                );
+                preparedStatement.setInt(1, leagueID);
+                preparedStatement.setInt(2, teamID);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(this, "Relación establecida exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    tableModel.setRowCount(0); // Limpiar la tabla antes de cargar los datos actualizados
+                    cargarLigasEquipos(); // Volver a cargar los datos desde la base de datos
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al establecer la relación.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "ID de liga y equipo deben ser números enteros.", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error al establecer la relación.", "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     // Clase para crear el panel de procesos de negocio
     static class PanelProcesos extends JPanel {
         // Definir las conexiones con la base de datos como variables de clase
@@ -641,30 +858,7 @@ public class AplicacionDeportiva {
                     String equipoSeleccionado = (String) equiposComboBox.getSelectedItem();
                     String jugadorSeleccionado = (String) jugadoresComboBox.getSelectedItem();
 
-                    // Lógica para asignar jugador seleccionado al equipo seleccionado
-                    try {
-                        // Abrir conexión con la base de datos
-                        conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
-
-                        // Preparar la consulta SQL para actualizar la base de datos con la asignación
-                        String query = "UPDATE players SET teams = ? WHERE nombre = ?";
-                        PreparedStatement preparedStmt = conn.prepareStatement(query);
-                        preparedStmt.setString(1, equipoSeleccionado);
-                        preparedStmt.setString(2, jugadorSeleccionado);
-
-                        // Ejecutar la consulta
-                        preparedStmt.executeUpdate();
-
-                        // Cerrar la conexión con la base de datos
-                        conn.close();
-
-                        // Mostrar mensaje de éxito
-                        JOptionPane.showMessageDialog(null, "Asignación exitosa");
-                    } catch (SQLException ex) {
-                        // Manejar excepciones y mostrar mensaje de error
-                        ex.printStackTrace();
-                        JOptionPane.showMessageDialog(null, "Error al asignar jugador al equipo");
-                    }
+                    asignarJugadorAEquipo(equipoSeleccionado, jugadorSeleccionado);
                 }
             });
 
@@ -688,8 +882,7 @@ public class AplicacionDeportiva {
                     String jugador1Seleccionado = (String) jugadoresComboBox1.getSelectedItem();
                     String jugador2Seleccionado = (String) jugadoresComboBox2.getSelectedItem();
 
-                    // Lógica para organizar partido entre los dos jugadores seleccionados
-                    // Implementa aquí tu lógica para organizar el partido entre los jugadores seleccionados
+                    organizarPartidoEntreJugadores(jugador1Seleccionado, jugador2Seleccionado);
                 }
             });
 
@@ -702,18 +895,14 @@ public class AplicacionDeportiva {
             panelOrganizarPartidoLigas.setBorder(BorderFactory.createTitledBorder("Organizar Partido entre Ligas"));
 
             JComboBox<String> ligasComboBox1 = new JComboBox<>();
-
             JComboBox<String> equiposComboBoxLiga1 = new JComboBox<>();
 
+            cargarLigasEnComboBox(ligasComboBox1);
 
-            cargarLigasEnComboBox(ligasComboBox1); // Método para cargar las ligas en el ComboBox 1
-            //cargarLigasEnComboBox(ligasComboBox2); // Método para cargar las ligas en el ComboBox 2
-
-// Acción al seleccionar una liga en el ComboBox 1
             ligasComboBox1.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     String ligaSeleccionada = (String) ligasComboBox1.getSelectedItem();
-                    cargarLigasEnComboBox( equiposComboBoxLiga1); // Método para cargar los equipos de la liga seleccionada en el ComboBox 1
+                    cargarEquiposDeLigaEnComboBox(ligaSeleccionada, equiposComboBoxLiga1);
                 }
             });
 
@@ -723,22 +912,16 @@ public class AplicacionDeportiva {
                     String liga1Seleccionada = (String) ligasComboBox1.getSelectedItem();
                     String equipo1Seleccionado = (String) equiposComboBoxLiga1.getSelectedItem();
 
-
-                    // Lógica para organizar partido entre los equipos de las ligas seleccionadas
-                    // Implementa aquí tu lógica para organizar el partido entre los equipos seleccionados de las ligas seleccionadas
+                    organizarPartidoEntreEquiposDeLiga(liga1Seleccionada, equipo1Seleccionado);
                 }
             });
 
-// Crear paneles para los JComboBox de las ligas y equipos
             JPanel ligasPanel = new JPanel(new GridLayout(1, 2));
             ligasPanel.add(ligasComboBox1);
-
 
             panelOrganizarPartidoLigas.add(ligasPanel, BorderLayout.NORTH);
             panelOrganizarPartidoLigas.add(equiposComboBoxLiga1, BorderLayout.CENTER);
             panelOrganizarPartidoLigas.add(organizarPartidoButtonLigas, BorderLayout.SOUTH);
-
-
 
             // Panel para organizar partidos entre equipos de una misma liga
             JPanel panelOrganizarPartidoLigaUnica = new JPanel(new BorderLayout());
@@ -748,9 +931,9 @@ public class AplicacionDeportiva {
             JComboBox<String> equiposComboBoxLigaUnica1 = new JComboBox<>();
             JComboBox<String> equiposComboBoxLigaUnica2 = new JComboBox<>();
 
-            cargarLigasEnComboBox(ligaUnicaComboBox); // Método para cargar las ligas en el ComboBox
-            cargarEquiposEnComboBox(equiposComboBoxLigaUnica1); // Método para cargar los equipos de la liga en el ComboBox
-            cargarEquiposEnComboBox(equiposComboBoxLigaUnica2); // Método para cargar los equipos de la liga en el ComboBox
+            cargarLigasEnComboBox(ligaUnicaComboBox);
+            cargarEquiposEnComboBox(equiposComboBoxLigaUnica1);
+            cargarEquiposEnComboBox(equiposComboBoxLigaUnica2);
 
             JButton organizarPartidoButtonLigaUnica = new JButton("Organizar Partido");
             organizarPartidoButtonLigaUnica.addActionListener(new ActionListener() {
@@ -759,12 +942,10 @@ public class AplicacionDeportiva {
                     String equipo1Seleccionado = (String) equiposComboBoxLigaUnica1.getSelectedItem();
                     String equipo2Seleccionado = (String) equiposComboBoxLigaUnica2.getSelectedItem();
 
-                    // Lógica para organizar partido entre los dos equipos de la misma liga seleccionada
-                    // Implementa aquí tu lógica para organizar el partido entre los equipos seleccionados de la misma liga
+                    organizarPartidoEntreEquiposDeLiga(ligaSeleccionada, equipo1Seleccionado, equipo2Seleccionado);
                 }
             });
 
-// Crear paneles para los JComboBox de los equipos
             JPanel equiposPanel = new JPanel(new GridLayout(1, 2));
             equiposPanel.add(equiposComboBoxLigaUnica1);
             equiposPanel.add(equiposComboBoxLigaUnica2);
@@ -773,13 +954,10 @@ public class AplicacionDeportiva {
             panelOrganizarPartidoLigaUnica.add(equiposPanel, BorderLayout.CENTER);
             panelOrganizarPartidoLigaUnica.add(organizarPartidoButtonLigaUnica, BorderLayout.SOUTH);
 
-
-
             add(panelAsignarJugadores);
             add(panelOrganizarPartidoJugadores);
             add(panelOrganizarPartidoLigas);
             add(panelOrganizarPartidoLigaUnica);
-
         }
 
         // Métodos para cargar datos en ComboBox
@@ -835,6 +1013,22 @@ public class AplicacionDeportiva {
             }
         }
 
+        private void cargarEquiposDeLigaEnComboBox(String nombreLiga, JComboBox<String> comboBox) {
+            try {
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+                PreparedStatement preparedStmt = conn.prepareStatement("SELECT team_name FROM teams WHERE team_id IN (SELECT team_id FROM teams_leagues WHERE league_id = (SELECT league_id FROM leagues WHERE league_name = ?))");
+                preparedStmt.setString(1, nombreLiga);
+                ResultSet rs = preparedStmt.executeQuery();
+                while (rs.next()) {
+                    comboBox.addItem(rs.getString("team_name"));
+                }
+                conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error al cargar equipos de la liga desde la base de datos");
+            }
+        }
+
         // Lógica para asignar jugador seleccionado al equipo seleccionado
         private void asignarJugadorAEquipo(String equipoSeleccionado, String jugadorSeleccionado) {
             try {
@@ -867,7 +1061,7 @@ public class AplicacionDeportiva {
             }
         }
 
-        private void organizarPartidoEntreLigas(String ligaSeleccionada) {
+        private void organizarPartidoEntreEquiposDeLiga(String ligaSeleccionada, String equipo1Seleccionado) {
             try {
                 List<String> equiposLiga = obtenerEquiposDeLiga(ligaSeleccionada);
 
@@ -877,20 +1071,18 @@ public class AplicacionDeportiva {
                 }
 
                 Random random = new Random();
-                int indiceEquipo1 = random.nextInt(equiposLiga.size());
                 int indiceEquipo2 = random.nextInt(equiposLiga.size());
 
-                while (indiceEquipo2 == indiceEquipo1) {
+                while (indiceEquipo2 == obtenerIndiceEquipo(equiposLiga, equipo1Seleccionado)) {
                     indiceEquipo2 = random.nextInt(equiposLiga.size());
                 }
 
-                String equipo1Seleccionado = equiposLiga.get(indiceEquipo1);
                 String equipo2Seleccionado = equiposLiga.get(indiceEquipo2);
 
                 organizarPartidoEntreEquiposDeLiga(ligaSeleccionada, equipo1Seleccionado, equipo2Seleccionado);
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al organizar el partido entre ligas");
+                JOptionPane.showMessageDialog(null, "Error al organizar el partido entre equipos de la misma liga");
             }
         }
 
@@ -925,11 +1117,6 @@ public class AplicacionDeportiva {
         }
 
         // Método para obtener los equipos de una liga por su nombre
-        private List<String> obtenerEquiposDeLiga() throws SQLException {
-            return obtenerEquiposDeLiga(null);
-        }
-
-        // Método para obtener los equipos de una liga por su nombre
         private List<String> obtenerEquiposDeLiga(String nombreLiga) throws SQLException {
             List<String> equiposLiga = new ArrayList<>();
             conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
@@ -941,6 +1128,16 @@ public class AplicacionDeportiva {
             }
             conn.close();
             return equiposLiga;
+        }
+
+        // Método para obtener el índice de un equipo en la lista de equipos de una liga
+        private int obtenerIndiceEquipo(List<String> equiposLiga, String equipoSeleccionado) {
+            for (int i = 0; i < equiposLiga.size(); i++) {
+                if (equiposLiga.get(i).equals(equipoSeleccionado)) {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         // Obtener ID de equipo por nombre
