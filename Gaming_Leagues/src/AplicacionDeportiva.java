@@ -858,7 +858,30 @@ public class AplicacionDeportiva {
                     String equipoSeleccionado = (String) equiposComboBox.getSelectedItem();
                     String jugadorSeleccionado = (String) jugadoresComboBox.getSelectedItem();
 
-                    asignarJugadorAEquipo(equipoSeleccionado, jugadorSeleccionado);
+                    // Lógica para asignar jugador seleccionado al equipo seleccionado
+                    try {
+                        // Abrir conexión con la base de datos
+                        conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+
+                        // Preparar la consulta SQL para actualizar la base de datos con la asignación
+                        String query = "UPDATE players SET teams = ? WHERE nombre = ?";
+                        PreparedStatement preparedStmt = conn.prepareStatement(query);
+                        preparedStmt.setString(1, equipoSeleccionado);
+                        preparedStmt.setString(2, jugadorSeleccionado);
+
+                        // Ejecutar la consulta
+                        preparedStmt.executeUpdate();
+
+                        // Cerrar la conexión con la base de datos
+                        conn.close();
+
+                        // Mostrar mensaje de éxito
+                        JOptionPane.showMessageDialog(null, "Asignación exitosa");
+                    } catch (SQLException ex) {
+                        // Manejar excepciones y mostrar mensaje de error
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error al asignar jugador al equipo");
+                    }
                 }
             });
 
@@ -882,7 +905,8 @@ public class AplicacionDeportiva {
                     String jugador1Seleccionado = (String) jugadoresComboBox1.getSelectedItem();
                     String jugador2Seleccionado = (String) jugadoresComboBox2.getSelectedItem();
 
-                    organizarPartidoEntreJugadores(jugador1Seleccionado, jugador2Seleccionado);
+                    // Lógica para organizar partido entre los dos jugadores seleccionados
+                    // Implementa aquí tu lógica para organizar el partido entre los jugadores seleccionados
                 }
             });
 
@@ -895,14 +919,18 @@ public class AplicacionDeportiva {
             panelOrganizarPartidoLigas.setBorder(BorderFactory.createTitledBorder("Organizar Partido entre Ligas"));
 
             JComboBox<String> ligasComboBox1 = new JComboBox<>();
+
             JComboBox<String> equiposComboBoxLiga1 = new JComboBox<>();
 
-            cargarLigasEnComboBox(ligasComboBox1);
 
+            cargarLigasEnComboBox(ligasComboBox1); // Método para cargar las ligas en el ComboBox 1
+            //cargarLigasEnComboBox(ligasComboBox2); // Método para cargar las ligas en el ComboBox 2
+
+// Acción al seleccionar una liga en el ComboBox 1
             ligasComboBox1.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     String ligaSeleccionada = (String) ligasComboBox1.getSelectedItem();
-                    cargarEquiposDeLigaEnComboBox(ligaSeleccionada, equiposComboBoxLiga1);
+                    cargarLigasEnComboBox( equiposComboBoxLiga1); // Método para cargar los equipos de la liga seleccionada en el ComboBox 1
                 }
             });
 
@@ -912,16 +940,22 @@ public class AplicacionDeportiva {
                     String liga1Seleccionada = (String) ligasComboBox1.getSelectedItem();
                     String equipo1Seleccionado = (String) equiposComboBoxLiga1.getSelectedItem();
 
-                    organizarPartidoEntreEquiposDeLiga(liga1Seleccionada, equipo1Seleccionado);
+
+                    // Lógica para organizar partido entre los equipos de las ligas seleccionadas
+                    // Implementa aquí tu lógica para organizar el partido entre los equipos seleccionados de las ligas seleccionadas
                 }
             });
 
+// Crear paneles para los JComboBox de las ligas y equipos
             JPanel ligasPanel = new JPanel(new GridLayout(1, 2));
             ligasPanel.add(ligasComboBox1);
+
 
             panelOrganizarPartidoLigas.add(ligasPanel, BorderLayout.NORTH);
             panelOrganizarPartidoLigas.add(equiposComboBoxLiga1, BorderLayout.CENTER);
             panelOrganizarPartidoLigas.add(organizarPartidoButtonLigas, BorderLayout.SOUTH);
+
+
 
             // Panel para organizar partidos entre equipos de una misma liga
             JPanel panelOrganizarPartidoLigaUnica = new JPanel(new BorderLayout());
@@ -931,9 +965,9 @@ public class AplicacionDeportiva {
             JComboBox<String> equiposComboBoxLigaUnica1 = new JComboBox<>();
             JComboBox<String> equiposComboBoxLigaUnica2 = new JComboBox<>();
 
-            cargarLigasEnComboBox(ligaUnicaComboBox);
-            cargarEquiposEnComboBox(equiposComboBoxLigaUnica1);
-            cargarEquiposEnComboBox(equiposComboBoxLigaUnica2);
+            cargarLigasEnComboBox(ligaUnicaComboBox); // Método para cargar las ligas en el ComboBox
+            cargarEquiposEnComboBox(equiposComboBoxLigaUnica1); // Método para cargar los equipos de la liga en el ComboBox
+            cargarEquiposEnComboBox(equiposComboBoxLigaUnica2); // Método para cargar los equipos de la liga en el ComboBox
 
             JButton organizarPartidoButtonLigaUnica = new JButton("Organizar Partido");
             organizarPartidoButtonLigaUnica.addActionListener(new ActionListener() {
@@ -942,10 +976,12 @@ public class AplicacionDeportiva {
                     String equipo1Seleccionado = (String) equiposComboBoxLigaUnica1.getSelectedItem();
                     String equipo2Seleccionado = (String) equiposComboBoxLigaUnica2.getSelectedItem();
 
-                    organizarPartidoEntreEquiposDeLiga(ligaSeleccionada, equipo1Seleccionado, equipo2Seleccionado);
+                    // Lógica para organizar partido entre los dos equipos de la misma liga seleccionada
+                    // Implementa aquí tu lógica para organizar el partido entre los equipos seleccionados de la misma liga
                 }
             });
 
+// Crear paneles para los JComboBox de los equipos
             JPanel equiposPanel = new JPanel(new GridLayout(1, 2));
             equiposPanel.add(equiposComboBoxLigaUnica1);
             equiposPanel.add(equiposComboBoxLigaUnica2);
@@ -954,10 +990,13 @@ public class AplicacionDeportiva {
             panelOrganizarPartidoLigaUnica.add(equiposPanel, BorderLayout.CENTER);
             panelOrganizarPartidoLigaUnica.add(organizarPartidoButtonLigaUnica, BorderLayout.SOUTH);
 
+
+
             add(panelAsignarJugadores);
             add(panelOrganizarPartidoJugadores);
             add(panelOrganizarPartidoLigas);
             add(panelOrganizarPartidoLigaUnica);
+
         }
 
         // Métodos para cargar datos en ComboBox
@@ -1013,22 +1052,6 @@ public class AplicacionDeportiva {
             }
         }
 
-        private void cargarEquiposDeLigaEnComboBox(String nombreLiga, JComboBox<String> comboBox) {
-            try {
-                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
-                PreparedStatement preparedStmt = conn.prepareStatement("SELECT team_name FROM teams WHERE team_id IN (SELECT team_id FROM teams_leagues WHERE league_id = (SELECT league_id FROM leagues WHERE league_name = ?))");
-                preparedStmt.setString(1, nombreLiga);
-                ResultSet rs = preparedStmt.executeQuery();
-                while (rs.next()) {
-                    comboBox.addItem(rs.getString("team_name"));
-                }
-                conn.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al cargar equipos de la liga desde la base de datos");
-            }
-        }
-
         // Lógica para asignar jugador seleccionado al equipo seleccionado
         private void asignarJugadorAEquipo(String equipoSeleccionado, String jugadorSeleccionado) {
             try {
@@ -1061,7 +1084,7 @@ public class AplicacionDeportiva {
             }
         }
 
-        private void organizarPartidoEntreEquiposDeLiga(String ligaSeleccionada, String equipo1Seleccionado) {
+        private void organizarPartidoEntreLigas(String ligaSeleccionada) {
             try {
                 List<String> equiposLiga = obtenerEquiposDeLiga(ligaSeleccionada);
 
@@ -1071,18 +1094,20 @@ public class AplicacionDeportiva {
                 }
 
                 Random random = new Random();
+                int indiceEquipo1 = random.nextInt(equiposLiga.size());
                 int indiceEquipo2 = random.nextInt(equiposLiga.size());
 
-                while (indiceEquipo2 == obtenerIndiceEquipo(equiposLiga, equipo1Seleccionado)) {
+                while (indiceEquipo2 == indiceEquipo1) {
                     indiceEquipo2 = random.nextInt(equiposLiga.size());
                 }
 
+                String equipo1Seleccionado = equiposLiga.get(indiceEquipo1);
                 String equipo2Seleccionado = equiposLiga.get(indiceEquipo2);
 
                 organizarPartidoEntreEquiposDeLiga(ligaSeleccionada, equipo1Seleccionado, equipo2Seleccionado);
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al organizar el partido entre equipos de la misma liga");
+                JOptionPane.showMessageDialog(null, "Error al organizar el partido entre ligas");
             }
         }
 
@@ -1117,6 +1142,11 @@ public class AplicacionDeportiva {
         }
 
         // Método para obtener los equipos de una liga por su nombre
+        private List<String> obtenerEquiposDeLiga() throws SQLException {
+            return obtenerEquiposDeLiga(null);
+        }
+
+        // Método para obtener los equipos de una liga por su nombre
         private List<String> obtenerEquiposDeLiga(String nombreLiga) throws SQLException {
             List<String> equiposLiga = new ArrayList<>();
             conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
@@ -1128,16 +1158,6 @@ public class AplicacionDeportiva {
             }
             conn.close();
             return equiposLiga;
-        }
-
-        // Método para obtener el índice de un equipo en la lista de equipos de una liga
-        private int obtenerIndiceEquipo(List<String> equiposLiga, String equipoSeleccionado) {
-            for (int i = 0; i < equiposLiga.size(); i++) {
-                if (equiposLiga.get(i).equals(equipoSeleccionado)) {
-                    return i;
-                }
-            }
-            return -1;
         }
 
         // Obtener ID de equipo por nombre
@@ -1178,126 +1198,126 @@ public class AplicacionDeportiva {
     }
 
 
-        // Clase para crear el panel de reportes
-        static class PanelReportes extends JPanel {
-            public PanelReportes() {
-                setLayout(new GridLayout(3, 1));
+    // Clase para crear el panel de reportes
+    static class PanelReportes extends JPanel {
+        public PanelReportes() {
+            setLayout(new GridLayout(3, 1));
 
-                // Reporte: Jugadores más destacados en cada juego
-                JButton jugadoresDestacadosBtn = new JButton("Reporte: Jugadores Destacados en Cada Juego");
-                jugadoresDestacadosBtn.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        generarReporteJugadoresDestacados();
-                    }
-                });
-
-                // Reporte: Rendimiento de equipos en las ligas
-                JButton rendimientoEquiposBtn = new JButton("Reporte: Rendimiento de Equipos en las Ligas");
-                rendimientoEquiposBtn.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        generarReporteRendimientoEquipos();
-                    }
-                });
-
-                // Reporte: Historial de partidos de cada jugador
-                JButton historialPartidosBtn = new JButton("Reporte: Historial de Partidos de Cada Jugador");
-                historialPartidosBtn.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        generarReporteHistorialPartidos();
-                    }
-                });
-
-                add(jugadoresDestacadosBtn);
-                add(rendimientoEquiposBtn);
-                add(historialPartidosBtn);
-            }
-
-            // Método para generar el reporte de jugadores más destacados en cada juego
-            private void generarReporteJugadoresDestacados() {
-                try {
-                    // Establecer conexión con la base de datos
-                    Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
-
-                    // Consultar la base de datos para obtener los jugadores más destacados en cada juego
-                    // Ejecutar la consulta y obtener los resultados
-                    Statement stmt = conn.createStatement();
-                    ResultSet rs = stmt.executeQuery("SELECT game_name, player_name FROM player_stats ORDER BY score DESC");
-
-                    // Procesar los resultados y generar el reporte
-                    while (rs.next()) {
-                        String juego = rs.getString("game_name");
-                        String jugador = rs.getString("player_name");
-
-                        // Aquí puedes imprimir o almacenar los resultados como desees
-                        System.out.println("Juego: " + juego + ", Jugador destacado: " + jugador);
-                    }
-
-                    // Cerrar la conexión con la base de datos
-                    conn.close();
-                } catch (SQLException ex) {
-                    // Manejar excepciones
-                    ex.printStackTrace();
+            // Reporte: Jugadores más destacados en cada juego
+            JButton jugadoresDestacadosBtn = new JButton("Reporte: Jugadores Destacados en Cada Juego");
+            jugadoresDestacadosBtn.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    generarReporteJugadoresDestacados();
                 }
-            }
+            });
 
-            // Método para generar el reporte de rendimiento de equipos en las ligas
-            private void generarReporteRendimientoEquipos() {
-                try {
-                    // Establecer conexión con la base de datos
-                    Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
-
-                    // Consultar la base de datos para obtener el rendimiento de equipos en las ligas
-                    // Ejecutar la consulta y obtener los resultados
-                    Statement stmt = conn.createStatement();
-                    ResultSet rs = stmt.executeQuery("SELECT league_name, team_name, wins, losses FROM team_performance");
-
-                    // Procesar los resultados y generar el reporte
-                    while (rs.next()) {
-                        String liga = rs.getString("league_name");
-                        String equipo = rs.getString("team_name");
-                        int victorias = rs.getInt("wins");
-                        int derrotas = rs.getInt("losses");
-
-                        // Aquí puedes imprimir o almacenar los resultados como desees
-                        System.out.println("Liga: " + liga + ", Equipo: " + equipo + ", Victorias: " + victorias + ", Derrotas: " + derrotas);
-                    }
-
-                    // Cerrar la conexión con la base de datos
-                    conn.close();
-                } catch (SQLException ex) {
-                    // Manejar excepciones
-                    ex.printStackTrace();
+            // Reporte: Rendimiento de equipos en las ligas
+            JButton rendimientoEquiposBtn = new JButton("Reporte: Rendimiento de Equipos en las Ligas");
+            rendimientoEquiposBtn.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    generarReporteRendimientoEquipos();
                 }
-            }
+            });
 
-            // Método para generar el reporte de historial de partidos de cada jugador
-            private void generarReporteHistorialPartidos() {
-                try {
-                    // Establecer conexión con la base de datos
-                    Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
-
-                    // Consultar la base de datos para obtener el historial de partidos de cada jugador
-                    // Ejecutar la consulta y obtener los resultados
-                    Statement stmt = conn.createStatement();
-                    ResultSet rs = stmt.executeQuery("SELECT player_name, match_date, opponent FROM player_matches ORDER BY match_date DESC");
-
-                    // Procesar los resultados y generar el reporte
-                    while (rs.next()) {
-                        String jugador = rs.getString("player_name");
-                        Date fecha = rs.getDate("match_date");
-                        String oponente = rs.getString("opponent");
-
-                        // Aquí puedes imprimir o almacenar los resultados como desees
-                        System.out.println("Jugador: " + jugador + ", Fecha del partido: " + fecha + ", Oponente: " + oponente);
-                    }
-
-                    // Cerrar la conexión con la base de datos
-                    conn.close();
-                } catch (SQLException ex) {
-                    // Manejar excepciones
-                    ex.printStackTrace();
+            // Reporte: Historial de partidos de cada jugador
+            JButton historialPartidosBtn = new JButton("Reporte: Historial de Partidos de Cada Jugador");
+            historialPartidosBtn.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    generarReporteHistorialPartidos();
                 }
-            }
+            });
 
+            add(jugadoresDestacadosBtn);
+            add(rendimientoEquiposBtn);
+            add(historialPartidosBtn);
         }
+
+        // Método para generar el reporte de jugadores más destacados en cada juego
+        private void generarReporteJugadoresDestacados() {
+            try {
+                // Establecer conexión con la base de datos
+                Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+
+                // Consultar la base de datos para obtener los jugadores más destacados en cada juego
+                // Ejecutar la consulta y obtener los resultados
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT game_name, player_name FROM player_stats ORDER BY score DESC");
+
+                // Procesar los resultados y generar el reporte
+                while (rs.next()) {
+                    String juego = rs.getString("game_name");
+                    String jugador = rs.getString("player_name");
+
+                    // Aquí puedes imprimir o almacenar los resultados como desees
+                    System.out.println("Juego: " + juego + ", Jugador destacado: " + jugador);
+                }
+
+                // Cerrar la conexión con la base de datos
+                conn.close();
+            } catch (SQLException ex) {
+                // Manejar excepciones
+                ex.printStackTrace();
+            }
+        }
+
+        // Método para generar el reporte de rendimiento de equipos en las ligas
+        private void generarReporteRendimientoEquipos() {
+            try {
+                // Establecer conexión con la base de datos
+                Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+
+                // Consultar la base de datos para obtener el rendimiento de equipos en las ligas
+                // Ejecutar la consulta y obtener los resultados
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT league_name, team_name, wins, losses FROM team_performance");
+
+                // Procesar los resultados y generar el reporte
+                while (rs.next()) {
+                    String liga = rs.getString("league_name");
+                    String equipo = rs.getString("team_name");
+                    int victorias = rs.getInt("wins");
+                    int derrotas = rs.getInt("losses");
+
+                    // Aquí puedes imprimir o almacenar los resultados como desees
+                    System.out.println("Liga: " + liga + ", Equipo: " + equipo + ", Victorias: " + victorias + ", Derrotas: " + derrotas);
+                }
+
+                // Cerrar la conexión con la base de datos
+                conn.close();
+            } catch (SQLException ex) {
+                // Manejar excepciones
+                ex.printStackTrace();
+            }
+        }
+
+        // Método para generar el reporte de historial de partidos de cada jugador
+        private void generarReporteHistorialPartidos() {
+            try {
+                // Establecer conexión con la base de datos
+                Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Gaming_Leagues", "developer", "23100132");
+
+                // Consultar la base de datos para obtener el historial de partidos de cada jugador
+                // Ejecutar la consulta y obtener los resultados
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT player_name, match_date, opponent FROM player_matches ORDER BY match_date DESC");
+
+                // Procesar los resultados y generar el reporte
+                while (rs.next()) {
+                    String jugador = rs.getString("player_name");
+                    Date fecha = rs.getDate("match_date");
+                    String oponente = rs.getString("opponent");
+
+                    // Aquí puedes imprimir o almacenar los resultados como desees
+                    System.out.println("Jugador: " + jugador + ", Fecha del partido: " + fecha + ", Oponente: " + oponente);
+                }
+
+                // Cerrar la conexión con la base de datos
+                conn.close();
+            } catch (SQLException ex) {
+                // Manejar excepciones
+                ex.printStackTrace();
+            }
+        }
+
+    }
 }
