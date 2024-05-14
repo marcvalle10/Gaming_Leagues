@@ -1,0 +1,9 @@
+Liga: Women's League, Equipo: The Wolves, Victorias: 0, Derrotas: 0
+Liga: Junior League, Equipo: The Wolves, Victorias: 0, Derrotas: 1
+Liga: Junior League, Equipo: The Eagles, Victorias: 1, Derrotas: 0
+Liga: Junior League, Equipo: The Hawks, Victorias: 1, Derrotas: 0
+Liga: Women's League, Equipo: The Tigers, Victorias: 0, Derrotas: 0
+Liga: Women's League, Equipo: The Lions, Victorias: 1, Derrotas: 0
+Liga: Junior League, Equipo: The Lions, Victorias: 0, Derrotas: 1
+Liga: Women's League, Equipo: The Eagles, Victorias: 0, Derrotas: 0
+Liga: Women's League, Equipo: The Hawks, Victorias: 1, Derrotas: 0

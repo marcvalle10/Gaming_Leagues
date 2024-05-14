@@ -1,0 +1,9 @@
+Fecha del partido: 2024-05-13, Jugador 1: John Doe, Jugador 2: Jane Smith, Resultado: win
+Fecha del partido: 2024-05-13, Jugador 1: Jane Smith, Jugador 2: John Doe, Resultado: lose
+Fecha del partido: 2024-05-13, Jugador 1: John Doe, Jugador 2: Jane Smith, Resultado: lose
+Fecha del partido: 2024-05-13, Jugador 1: Jane Smith, Jugador 2: Luis Sanchez, Resultado: win
+Fecha del partido: 2024-05-13, Jugador 1: Luis Sanchez, Jugador 2: John Doe, Resultado: draw
+Fecha del partido: 2024-05-13, Jugador 1: John Doe, Jugador 2: Maria Garcia, Resultado: null
+Fecha del partido: 2024-05-13, Jugador 1: Maria Garcia, Jugador 2: John Doe, Resultado: null
+Fecha del partido: 2024-05-13, Jugador 1: Luis Sanchez, Jugador 2: Maria Garcia, Resultado: null
+Fecha del partido: 2024-05-13, Jugador 1: Luis Sanchez, Jugador 2: Maria Garcia, Resultado: null

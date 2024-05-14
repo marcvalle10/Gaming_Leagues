@@ -1,0 +1,5 @@
+Juego: Chess, Jugador destacado: Luis Sanchez
+Juego: Soccer, Jugador destacado: Jane Smith
+Juego: League of Legends, Jugador destacado: Jane Smith
+Juego: Chess, Jugador destacado: John Doe
+Juego: Soccer, Jugador destacado: John Doe

@@ -1,0 +1,9 @@
+Fecha del partido: 2022-01-01, Equipo 1: The Eagles, Equipo 2: The Hawks, Resultado: null
+Fecha del partido: 2022-01-02, Equipo 1: The Hawks, Equipo 2: The Wolves, Resultado: null
+Fecha del partido: 2022-01-03, Equipo 1: The Eagles, Equipo 2: The Wolves, Resultado: null
+Fecha del partido: 2022-01-04, Equipo 1: The Eagles, Equipo 2: The Hawks, Resultado: null
+Fecha del partido: 2022-01-05, Equipo 1: The Hawks, Equipo 2: The Wolves, Resultado: null
+Fecha del partido: 2024-05-10, Equipo 1: The Eagles, Equipo 2: The Hawks, Resultado: win
+Fecha del partido: 2024-05-11, Equipo 1: The Wolves, Equipo 2: The Lions, Resultado: lose
+Fecha del partido: 2024-05-12, Equipo 1: The Tigers, Equipo 2: The Wolves, Resultado: draw
+Fecha del partido: 2024-05-13, Equipo 1: The Lions, Equipo 2: The Hawks, Resultado: win
