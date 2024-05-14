@@ -53,7 +53,7 @@ public class AplicacionDeportiva {
     private static JPanel mainPanel;
     private static JTabbedPane tabbedPane;
 
-    public void main(String[] args) {
+    public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> crearYMostrarGUI());
     }
 
