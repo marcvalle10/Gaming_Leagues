@@ -106,3 +106,6 @@ COMMIT;
 ALTER TABLE Leagues
 ADD COLUMN start_date DATE,
 ADD COLUMN end_date DATE;
+
+ALTER TABLE Matches_Teams
+ADD COLUMN result VARCHAR(10) CHECK (result IN ('win', 'lose', 'draw'));
