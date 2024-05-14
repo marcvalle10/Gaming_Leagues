@@ -76,16 +76,6 @@ CREATE TABLE Matches (
     FOREIGN KEY (player_1_id) REFERENCES Players(player_id),
     FOREIGN KEY (player_2_id) REFERENCES Players(player_id)
 );
--- Tabla de Asignación de Jugadores a Equipos
-CREATE TABLE Players_Teams (
-    player_id INTEGER NOT NULL,
-    team_id INTEGER NOT NULL,
-    date_assigned DATE DEFAULT CURRENT_DATE,
-    PRIMARY KEY (player_id, team_id),
-    FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE,
-    FOREIGN KEY (team_id) REFERENCES Teams(team_id) ON DELETE CASCADE
-);
-
 
 -- Tabla de Relación entre Ligas y Equipos
 CREATE TABLE Leagues_Teams (
