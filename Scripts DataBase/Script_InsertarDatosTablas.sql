@@ -60,4 +60,12 @@ INSERT INTO Matches (game_code, player_1_id, player_2_id, result) VALUES
 (1, 1, 2, 'lose'), 
 (2, 2, 3, 'win'), 
 (3, 3, 1, 'draw'); 
+
+INSERT INTO Matches_Teams (league_id, team1_id, team2_id, match_date, game_code) VALUES
+(1, 1, 2, '2022-01-01', 1), 
+(2, 2, 3, '2022-01-02', 2),
+(1, 1, 3, '2022-01-03', 1), 
+(2, 1, 2, '2022-01-04', 2), 
+(1, 2, 3, '2022-01-05', 1); 
+
 COMMIT;

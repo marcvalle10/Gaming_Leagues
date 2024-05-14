@@ -86,6 +86,20 @@ CREATE TABLE Leagues_Teams (
     FOREIGN KEY (team_id) REFERENCES Teams(team_id) ON DELETE CASCADE
 );
 
+CREATE TABLE Matches_Teams (
+    match_id SERIAL PRIMARY KEY,
+    league_id INT,
+    team1_id INT,
+    team2_id INT,
+    match_date DATE,
+    game_code INT,
+    FOREIGN KEY (league_id) REFERENCES Leagues(league_id),
+    FOREIGN KEY (team1_id) REFERENCES Teams(team_id),
+    FOREIGN KEY (team2_id) REFERENCES Teams(team_id),
+    FOREIGN KEY (game_code) REFERENCES Games(game_code)
+);
+
+
 COMMIT;
 
 -- Mejoras en la tabla de Ligas
