@@ -4,6 +4,8 @@
 -->	Brianna Yaliczia Castillo Grijalva
 -->	Daniela Garcia Lopez
 
+Video de Descripcion breve del codigo y de la app: https://youtu.be/_MHBpAnsUOk 
+
 
 # Gaming_Leagues
 
